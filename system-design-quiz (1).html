@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design Quiz</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #6c7bff;
+    --accent2: #4ecca3;
+    --text: #e8eaf6;
+    --text2: #8b90b8;
+    --success: #4ecca3;
+    --fail: #ff6b6b;
+    --font: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; display: flex; flex-direction: column; }
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-right: auto; }
+  .nav-progress { font-size: 12px; color: var(--text2); }
+  .progress-bar { width: 120px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
+  main { flex: 1; display: flex; overflow: hidden; height: calc(100vh - 56px); }
+  aside { width: 240px; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px 0; flex-shrink: 0; }
+  .sidebar-section { padding: 8px 16px 4px; font-size: 10px; font-weight: 700; color: var(--text2); letter-spacing: 0.12em; text-transform: uppercase; }
+  .topic-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 16px; background: none; border: none; color: var(--text2); font-size: 13px; text-align: left; cursor: pointer; transition: all 0.15s; border-left: 2px solid transparent; }
+  .topic-btn:hover { background: var(--surface2); color: var(--text); }
+  .topic-btn.active { color: var(--accent); border-left-color: var(--accent); background: var(--surface2); }
+  .topic-btn.completed { color: var(--success); }
+  .topic-btn .status { margin-left: auto; font-size: 11px; }
+  .content { flex: 1; overflow-y: auto; padding: 32px; display: flex; flex-direction: column; gap: 24px; }
+  .home { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 24px; text-align: center; }
+  .home h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
+  .home h1 span { color: var(--accent); }
+  .home p { color: var(--text2); font-size: 16px; max-width: 500px; line-height: 1.6; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 500px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .stat-card .num { font-size: 32px; font-weight: 800; color: var(--accent); }
+  .stat-card .label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .quiz-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .topic-tag { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .quiz-title { font-size: 24px; font-weight: 700; line-height: 1.3; }
+  .quiz-desc { color: var(--text2); font-size: 14px; margin-top: 8px; line-height: 1.5; }
+  .reset-btn { padding: 8px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 13px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+  .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .drag-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .drag-section h3 { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+  .items-bank { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; }
+  .drag-item { padding: 8px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: grab; transition: all 0.15s; user-select: none; white-space: nowrap; }
+  .drag-item:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .drag-item.dragging { opacity: 0.4; cursor: grabbing; }
+  .drag-item.correct { background: rgba(78,204,163,0.1); border-color: var(--success); color: var(--success); cursor: default; }
+  .drag-item.incorrect { background: rgba(255,107,107,0.1); border-color: var(--fail); color: var(--fail); animation: shake 0.3s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .drop-zones { display: grid; gap: 16px; }
+  .drop-zone-wrapper { display: flex; flex-direction: column; gap: 8px; }
+  .drop-zone-label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .drop-zone-label .hint { font-size: 11px; color: var(--text2); font-weight: 400; }
+  .drop-zone { min-height: 52px; border: 1.5px dashed var(--border); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; transition: all 0.15s; background: var(--surface2); }
+  .drop-zone.drag-over { border-color: var(--accent); background: rgba(108,123,255,0.05); }
+  .drop-zone-placeholder { font-size: 12px; color: var(--text2); opacity: 0.6; pointer-events: none; }
+
+  /* GLOSSARY SECTION */
+  .glossary-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .glossary-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; cursor: pointer; user-select: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+  .glossary-header:hover { border-bottom-color: var(--border); }
+  .glossary-header h3 { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; }
+  .glossary-toggle { font-size: 12px; color: var(--text2); }
+  .glossary-body { display: none; padding: 0 24px 20px; }
+  .glossary-body.open { display: block; }
+  .glossary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin-top: 16px; }
+  .glossary-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .glossary-term { font-size: 13px; font-weight: 600; color: var(--accent2); margin-bottom: 4px; }
+  .glossary-def { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+  .feedback { display: none; padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+  .feedback.show { display: block; }
+  .feedback.success { background: rgba(78,204,163,0.1); border: 1px solid var(--success); color: var(--success); }
+  .feedback.partial { background: rgba(255,200,100,0.1); border: 1px solid #ffc864; color: #ffc864; }
+  .feedback.error { background: rgba(255,107,107,0.1); border: 1px solid var(--fail); color: var(--fail); }
+  .check-btn { padding: 12px 28px; background: linear-gradient(135deg, var(--accent), #8b97ff); border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; align-self: flex-start; }
+  .check-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(108,123,255,0.3); }
+  .next-btn { padding: 12px 28px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: none; }
+  .next-btn.show { display: block; }
+  .next-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-row { display: flex; gap: 12px; align-items: center; }
+  .score-badge { display: none; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+  .score-badge.show { display: inline-block; }
+  .score-badge.perfect { background: rgba(78,204,163,0.15); color: var(--success); }
+  .score-badge.good { background: rgba(108,123,255,0.15); color: var(--accent); }
+  .score-badge.retry { background: rgba(255,107,107,0.15); color: var(--fail); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">⚡ SysDesign Quiz</div>
+  <span class="nav-progress" id="progressText">0 / 33 completed</span>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+</nav>
+<main>
+  <aside id="sidebar"></aside>
+  <div class="content" id="content"></div>
+</main>
+<script>
+const topics = [
+  {
+    id: 'sql-nosql', category: 'System Design', title: 'SQL vs NoSQL',
+    desc: 'Drag each characteristic to the correct database type.',
+    zones: [
+      { id: 'sql', label: 'SQL (Relational)', hint: 'e.g. PostgreSQL, MySQL' },
+      { id: 'nosql', label: 'NoSQL (Non-relational)', hint: 'e.g. MongoDB, Cosmos DB' }
+    ],
+    items: [
+      { text: 'Tables with rows and columns', zone: 'sql', def: 'SQL stores data in structured tables where every row has the same columns.' },
+      { text: 'Primary and foreign keys', zone: 'sql', def: 'Keys are how SQL tables relate to each other — a foreign key in orders points to a primary key in users.' },
+      { text: 'Strict schema enforced', zone: 'sql', def: 'Every row must match the defined columns — you cant add extra fields on the fly.' },
+      { text: 'Great for complex joins', zone: 'sql', def: 'SQL can combine data from multiple tables in one query using JOIN operations.' },
+      { text: 'Scales vertically by default', zone: 'sql', def: 'SQL databases typically grow by adding more power to one machine rather than adding more machines.' },
+      { text: 'ACID transactions built in', zone: 'sql', def: 'SQL guarantees that all or nothing happens — no partial writes that leave data in a bad state.' },
+      { text: 'Documents / key-value pairs', zone: 'nosql', def: 'NoSQL stores data as flexible JSON-like documents instead of rigid table rows.' },
+      { text: 'Flexible schema', zone: 'nosql', def: 'Two documents in the same container can have completely different fields — no rigid structure enforced.' },
+      { text: 'Scales horizontally easily', zone: 'nosql', def: 'NoSQL is designed to spread data across many machines without cross-machine joins slowing things down.' },
+      { text: 'Great for high write throughput', zone: 'nosql', def: 'NoSQL databases can handle millions of writes per second — ideal for IoT telemetry or social feeds.' },
+      { text: 'Eventual consistency common', zone: 'nosql', def: 'Data might not be perfectly in sync across all nodes instantly — it gets there eventually.' },
+      { text: 'Each document can have different fields', zone: 'nosql', def: 'One device document might have temperature and humidity, another only battery — both valid in NoSQL.' },
+    ]
+  },
+  {
+    id: 'url-flow', category: 'System Design', title: 'URL Request Flow',
+    desc: 'Put these steps in the correct order by dragging them into the sequence zones.',
+    zones: [
+      { id: 's1', label: 'Step 1', hint: 'First thing the browser does' },
+      { id: 's2', label: 'Step 2', hint: 'If no IP cached' },
+      { id: 's3', label: 'Step 3', hint: 'Establish connection' },
+      { id: 's4', label: 'Step 4', hint: 'Secure the connection (HTTPS)' },
+      { id: 's5', label: 'Step 5', hint: 'Send the request' },
+      { id: 's6', label: 'Step 6', hint: 'Get the response' },
+    ],
+    items: [
+      { text: 'Check browser / OS / router cache for IP', zone: 's1', def: 'Before hitting DNS, the browser checks local caches — browser, then OS, then router — to see if it already knows the IP.' },
+      { text: 'DNS lookup — resolve domain to IP', zone: 's2', def: 'DNS is the phonebook of the internet — it translates google.com into an IP address like 142.250.80.46.' },
+      { text: 'TCP handshake — SYN, SYN-ACK, ACK', zone: 's3', def: 'Three messages exchanged between browser and server to agree to open a connection before any data is sent.' },
+      { text: 'TLS handshake — negotiate encryption', zone: 's4', def: 'For HTTPS, an additional handshake that agrees on encryption so all data sent is secure.' },
+      { text: 'Browser sends HTTP GET request', zone: 's5', def: 'The actual request goes through the secure tunnel — includes method, headers, and optionally a body.' },
+      { text: 'Server responds — browser renders page', zone: 's6', def: 'Server sends back HTML/CSS/JS in packets that the browser reassembles and renders into what you see.' },
+    ]
+  },
+  {
+    id: 'caching', category: 'System Design', title: 'Caching',
+    desc: 'Drag each concept to the correct category.',
+    zones: [
+      { id: 'what', label: 'What caching does' },
+      { id: 'hit-miss', label: 'Cache hit vs miss' },
+      { id: 'strategies', label: 'Cache strategies' },
+      { id: 'tools', label: 'Cache tools / examples' },
+    ],
+    items: [
+      { text: 'Stores frequently accessed data for fast retrieval', zone: 'what', def: 'A cache holds data in fast memory so future requests get it instantly without hitting a slower database.' },
+      { text: 'Avoids repeated expensive DB queries', zone: 'what', def: 'If 10,000 users request the same product page, the cache serves it from memory instead of running 10,000 DB queries.' },
+      { text: 'Cache hit — data found, return immediately', zone: 'hit-miss', def: 'The data was in the cache — response is instant, no database call needed.' },
+      { text: 'Cache miss — fetch from DB, store in cache', zone: 'hit-miss', def: 'Data wasnt cached — go to the DB, get it, store it in cache so next time is fast.' },
+      { text: 'TTL — data expires after set time', zone: 'strategies', def: 'Time To Live — cached data auto-deletes after X seconds, forcing a fresh fetch next time.' },
+      { text: 'Active invalidation — delete on data change', zone: 'strategies', def: 'When underlying data changes, immediately delete the cache entry so stale data isnt served.' },
+      { text: 'LRU eviction — remove least recently used', zone: 'strategies', def: 'When cache is full, kick out the data that hasnt been accessed in the longest time.' },
+      { text: 'Redis — external in-memory cache', zone: 'tools', def: 'A standalone caching service that lives outside your app — fast, supports TTL, used by most production systems.' },
+      { text: 'In-memory cache — lives inside the app', zone: 'tools', def: 'Cache stored in the apps own memory — fastest possible but lost if the app restarts.' },
+    ]
+  },
+  {
+    id: 'message-queues', category: 'System Design', title: 'Message Queues',
+    desc: 'Match each term to its correct definition.',
+    zones: [
+      { id: 'producer', label: 'Producer' },
+      { id: 'consumer', label: 'Consumer' },
+      { id: 'queue', label: 'Queue / Broker' },
+      { id: 'dlq', label: 'Dead Letter Queue' },
+      { id: 'benefits', label: 'Key Benefits' },
+    ],
+    items: [
+      { text: 'Publishes events / messages', zone: 'producer', def: 'A producer is any service that sends a message into the queue — it publishes and moves on.' },
+      { text: 'Service that triggers the message', zone: 'producer', def: 'The thing that causes the message to exist — an order being placed, a device publishing telemetry.' },
+      { text: 'Reads and processes messages', zone: 'consumer', def: 'A consumer subscribes to a queue or topic and reacts to each message it receives.' },
+      { text: 'Reacts to events independently', zone: 'consumer', def: 'Each consumer operates on its own — one consumer failing doesnt stop others from processing.' },
+      { text: 'Holds messages in FIFO order', zone: 'queue', def: 'First In First Out — messages are processed in the order they were received.' },
+      { text: 'Kafka, Azure Service Bus', zone: 'queue', def: 'Popular message broker systems — Kafka is used in your current IoT work.' },
+      { text: 'Where failed messages land for retry', zone: 'dlq', def: 'If a consumer fails to process a message after X retries, it goes to the DLQ so nothing is lost.' },
+      { text: 'Prevents message loss on consumer failure', zone: 'dlq', def: 'DLQ acts as a safety net — failed messages wait there until someone investigates and reprocesses them.' },
+      { text: 'Decouples services from each other', zone: 'benefits', def: 'Services dont need to know about each other — they just publish and consume events independently.' },
+      { text: 'Async — producer doesnt wait', zone: 'benefits', def: 'The producer fires a message and immediately moves on without waiting for consumers to finish.' },
+      { text: 'Resilient — messages survive downtime', zone: 'benefits', def: 'If a consumer goes down, messages queue up and get processed when it comes back online.' },
+    ]
+  },
+  {
+    id: 'scaling', category: 'System Design', title: 'Horizontal vs Vertical Scaling',
+    desc: 'Sort these into the correct scaling type.',
+    zones: [
+      { id: 'vertical', label: 'Vertical Scaling (Scale Up)' },
+      { id: 'horizontal', label: 'Horizontal Scaling (Scale Out)' },
+    ],
+    items: [
+      { text: 'Add more CPU and RAM to one machine', zone: 'vertical', def: 'Vertical scaling makes a single server more powerful — bigger CPU, more memory, faster disk.' },
+      { text: 'Simple — no load balancer needed', zone: 'vertical', def: 'One machine means no traffic distribution complexity — just a bigger box.' },
+      { text: 'Hard physical ceiling', zone: 'vertical', def: 'There is a maximum amount of CPU and RAM you can fit in one machine — you will eventually hit it.' },
+      { text: 'Single point of failure', zone: 'vertical', def: 'If that one powerful machine goes down, everything goes down with it.' },
+      { text: 'Gets expensive fast', zone: 'vertical', def: 'High-end server hardware costs increase exponentially — doubling power more than doubles cost.' },
+      { text: 'Add more machines', zone: 'horizontal', def: 'Horizontal scaling adds more servers — 1 becomes 5 becomes 50, each handling a share of traffic.' },
+      { text: 'No hard ceiling — add indefinitely', zone: 'horizontal', def: 'You can keep adding machines as traffic grows — theoretically unlimited scale.' },
+      { text: 'Needs a load balancer', zone: 'horizontal', def: 'With multiple machines you need something to distribute incoming traffic evenly across them.' },
+      { text: 'No single point of failure', zone: 'horizontal', def: 'If one server goes down the others keep serving traffic — much more resilient.' },
+      { text: 'App must be stateless', zone: 'horizontal', def: 'Any server must be able to handle any request — session data cant live on one specific machine.' },
+      { text: 'Preferred by large scale systems', zone: 'horizontal', def: 'Twitter, Netflix, and Amazon all use horizontal scaling — its how internet-scale is achieved.' },
+    ]
+  },
+  {
+    id: 'load-balancers', category: 'System Design', title: 'Load Balancers',
+    desc: 'Match each concept to the correct category.',
+    zones: [
+      { id: 'what', label: 'What a load balancer does' },
+      { id: 'strategies', label: 'Routing strategies' },
+      { id: 'ha', label: 'High availability setup' },
+    ],
+    items: [
+      { text: 'Distributes traffic across multiple servers', zone: 'what', def: 'The load balancer sits in front of your servers and sends each incoming request to one of them.' },
+      { text: 'Removes unhealthy servers from rotation', zone: 'what', def: 'Using heartbeat health checks, the LB stops sending traffic to servers that are down.' },
+      { text: 'Eliminates single point of failure at app layer', zone: 'what', def: 'If any one server dies, the LB routes around it and other servers absorb the load.' },
+      { text: 'Round robin — rotate evenly 1,2,3,1,2,3', zone: 'strategies', def: 'Each request goes to the next server in sequence — simple and even distribution.' },
+      { text: 'Least connections — route to least busy', zone: 'strategies', def: 'Send each new request to whichever server currently has the fewest active connections.' },
+      { text: 'IP hashing — same user hits same server', zone: 'strategies', def: 'Hash the users IP address to always route them to the same server — useful for session consistency.' },
+      { text: 'Active-passive failover — backup LB on standby', zone: 'ha', def: 'Two load balancers run — one active, one passive. If the active fails the passive takes over automatically.' },
+      { text: 'Heartbeat checks detect downed servers', zone: 'ha', def: 'The LB pings each server periodically — no response means it removes that server from rotation.' },
+    ]
+  },
+  {
+    id: 'sync-async', category: 'System Design', title: 'Sync vs Async',
+    desc: 'Classify each scenario as synchronous or asynchronous.',
+    zones: [
+      { id: 'sync', label: 'Synchronous — caller waits' },
+      { id: 'async', label: 'Asynchronous — fire and forget' },
+    ],
+    items: [
+      { text: 'User login — check password before proceeding', zone: 'sync', def: 'Auth must succeed or fail before the app knows what to do next — it has to wait.' },
+      { text: 'Payment processing — must succeed before confirming order', zone: 'sync', def: 'You cannot confirm an order until you know the payment went through — synchronous by necessity.' },
+      { text: 'Fetching user profile to display on screen', zone: 'sync', def: 'The page cant render without the data — the request must complete before the UI can update.' },
+      { text: 'Auth check — cant proceed without yes or no', zone: 'sync', def: 'Everything downstream depends on knowing if the user is authenticated — you have to wait.' },
+      { text: 'Sending a welcome email after signup', zone: 'async', def: 'The user doesnt need to wait for an email to send — fire it off in the background via a queue.' },
+      { text: 'Push notification to mobile device', zone: 'async', def: 'Notifications dont need to block anything — push to a queue and let the notification service handle it.' },
+      { text: 'Updating analytics dashboard', zone: 'async', def: 'Analytics data doesnt need to be real-time — process it in the background asynchronously.' },
+      { text: 'IoT device publishes telemetry and moves on', zone: 'async', def: 'The device sends its sensor data to Kafka and immediately continues — it doesnt wait for processing.' },
+      { text: 'Restaurant notification after order placed', zone: 'async', def: 'Once payment is confirmed, the restaurant notification can happen in the background via a message queue.' },
+    ]
+  },
+  {
+    id: 'auth', category: 'System Design', title: 'Authentication vs Authorization',
+    desc: 'Match each concept to authentication or authorization.',
+    zones: [
+      { id: 'authn', label: 'Authentication — who are you?' },
+      { id: 'authz', label: 'Authorization — what can you do?' },
+      { id: 'jwt', label: 'JWT concepts' },
+    ],
+    items: [
+      { text: 'Verifying username and password', zone: 'authn', def: 'The first step — confirming the user is who they claim to be before doing anything else.' },
+      { text: 'Checking credentials against the database', zone: 'authn', def: 'The server compares what the user sent against what is stored — if they match, authentication succeeds.' },
+      { text: 'Passwords are hashed not encrypted (bcrypt)', zone: 'authn', def: 'Hashing is one-way — you cant reverse it. The server hashes your input and compares hashes, never storing the plain password.' },
+      { text: 'Issuing a JWT token on successful login', zone: 'authn', def: 'After confirming identity, the server creates a signed token the client sends with every future request.' },
+      { text: 'Checking if user has admin role', zone: 'authz', def: 'Authorization happens after authentication — now we know who you are, we check what you are allowed to do.' },
+      { text: 'RBAC — role based access control', zone: 'authz', def: 'Users belong to roles (admin, editor, viewer) and each role has defined permissions.' },
+      { text: 'Validating token scopes — user:read, user:write', zone: 'authz', def: 'Scopes in the JWT define exactly which operations the token grants permission to perform.' },
+      { text: 'Checking claims in the JWT payload', zone: 'authz', def: 'The payload of a JWT contains claims — who the user is, their role, what they can access.' },
+      { text: 'Header.Payload.Signature — three parts', zone: 'jwt', def: 'A JWT is three base64-encoded sections separated by dots — algorithm, claims data, and cryptographic signature.' },
+      { text: 'Short lived access token — 15 mins', zone: 'jwt', def: 'Access tokens expire quickly to limit damage if stolen — 15 minutes is common.' },
+      { text: 'Refresh token — used to get new JWT', zone: 'jwt', def: 'A longer-lived token used only to request a new access token when the old one expires — user stays logged in.' },
+      { text: 'Sent as Bearer token in Authorization header', zone: 'jwt', def: 'Every API request includes Authorization: Bearer <token> so the server can validate who is calling.' },
+    ]
+  },
+  {
+    id: 'monolith-micro', category: 'System Design', title: 'Monolith vs Microservices',
+    desc: 'Sort these characteristics into the correct architecture.',
+    zones: [
+      { id: 'mono', label: 'Monolith' },
+      { id: 'micro', label: 'Microservices' },
+    ],
+    items: [
+      { text: 'Everything in one codebase and deployment', zone: 'mono', def: 'Auth, orders, payments, notifications — all in one app deployed as a single unit.' },
+      { text: 'Simple to develop and debug early on', zone: 'mono', def: 'One codebase is easy to search, trace, and understand — no network calls between services to follow.' },
+      { text: 'One bug can take down everything', zone: 'mono', def: 'A crash in the payment module takes down your auth and orders too — no isolation.' },
+      { text: 'Hard to scale individual parts', zone: 'mono', def: 'If only your order service is under load, you still have to scale the whole app to handle it.' },
+      { text: 'Good for small teams starting out', zone: 'mono', def: 'Microservices add operational complexity a small team doesnt need — start simple.' },
+      { text: 'Independent deployable services', zone: 'micro', def: 'Each service is its own app — deployed, scaled, and updated independently of others.' },
+      { text: 'Each service scales independently', zone: 'micro', def: 'Scale just the order service during a sale — no need to scale everything.' },
+      { text: 'One service down doesnt break others', zone: 'micro', def: 'If the email service crashes, orders and payments keep running — failures are isolated.' },
+      { text: 'Complex to manage and debug', zone: 'micro', def: 'Tracing a request across 10 services is hard — you need good observability tools.' },
+      { text: 'Each service can have its own database', zone: 'micro', def: 'Services are truly independent — they dont share a database, reducing coupling even further.' },
+      { text: 'Risk of premature optimization', zone: 'micro', def: 'Starting with microservices before you understand your system adds complexity you may not need yet.' },
+    ]
+  },
+  {
+    id: 'cap', category: 'System Design', title: 'CAP Theorem',
+    desc: 'Match each term and example to the right CAP category.',
+    zones: [
+      { id: 'c', label: 'Consistency' },
+      { id: 'a', label: 'Availability' },
+      { id: 'p', label: 'Partition tolerance' },
+      { id: 'cp', label: 'CP system examples' },
+      { id: 'ap', label: 'AP system examples' },
+    ],
+    items: [
+      { text: 'Every read returns the most recent write', zone: 'c', def: 'Consistency means all nodes in the system see the same data at the same time.' },
+      { text: 'Every request gets a response always', zone: 'a', def: 'Availability means the system is always up and responding — even if the data might be slightly stale.' },
+      { text: 'System works even if nodes lose communication', zone: 'p', def: 'Partition tolerance means the system keeps functioning even when network partitions occur between nodes.' },
+      { text: 'Unavoidable in distributed systems', zone: 'p', def: 'Networks fail — partitions happen. P is not optional in any real distributed system.' },
+      { text: 'Banking — rather error than wrong balance', zone: 'cp', def: 'A bank prefers to show an error than show you an incorrect account balance — accuracy over uptime.' },
+      { text: 'Stock trading — accuracy critical', zone: 'cp', def: 'Stale stock prices could cost users money — consistency is non-negotiable.' },
+      { text: 'Twitter feed — stale data acceptable', zone: 'ap', def: 'Seeing a tweet a few seconds late is fine — Twitter favors staying up over perfect consistency.' },
+      { text: 'IoT telemetry — uptime over perfect accuracy', zone: 'ap', def: 'A sensor reading thats 100ms delayed is fine — the system staying available matters more.' },
+      { text: 'Eventual consistency — data catches up over time', zone: 'ap', def: 'AP systems accept that data will be consistent eventually — just not necessarily right this instant.' },
+    ]
+  },
+  {
+    id: 'db-indexes', category: 'System Design', title: 'Database Indexes',
+    desc: 'Match each statement to the correct category.',
+    zones: [
+      { id: 'what', label: 'What an index is' },
+      { id: 'read', label: 'Effect on reads' },
+      { id: 'write', label: 'Effect on writes' },
+      { id: 'when', label: 'When to index' },
+    ],
+    items: [
+      { text: 'Separate data structure for fast lookups', zone: 'what', def: 'An index is a sorted data structure the database maintains alongside the table for fast searching.' },
+      { text: 'Like a textbook index — jump straight to the page', zone: 'what', def: 'Instead of reading every page of a book, you look at the index and jump to the exact page you need.' },
+      { text: 'Avoids full table scan', zone: 'read', def: 'Without an index, every row is checked one by one — with an index you jump directly to matches.' },
+      { text: 'Jump directly to matching rows', zone: 'read', def: 'The index stores pointers to rows — the database goes straight there without scanning everything.' },
+      { text: 'Significantly faster queries', zone: 'read', def: 'Indexed queries can be orders of magnitude faster — from seconds to milliseconds at scale.' },
+      { text: 'Every write must update all indexes', zone: 'write', def: 'Each INSERT, UPDATE, or DELETE triggers an update to every index on that table — more indexes means slower writes.' },
+      { text: 'Too many indexes slow down inserts and updates', zone: 'write', def: 'If you have 10 indexes, one write operation triggers 10 index updates — expensive at scale.' },
+      { text: 'Uses extra disk space and memory', zone: 'write', def: 'Each index is a separate data structure stored on disk and loaded into memory — it has a real cost.' },
+      { text: 'Columns you frequently filter or sort by', zone: 'when', def: 'Index WHERE clause columns — things you search by like user_id, email, or status.' },
+      { text: 'user_id, email, created_at — good candidates', zone: 'when', def: 'These are queried constantly in most apps — indexing them gives huge read performance gains.' },
+      { text: 'Rarely queried columns — not worth it', zone: 'when', def: 'Indexing a bio field nobody searches by adds write cost with no read benefit.' },
+    ]
+  },
+  {
+    id: 'rate-limiting', category: 'System Design', title: 'Rate Limiting',
+    desc: 'Sort these into the correct category.',
+    zones: [
+      { id: 'what', label: 'What rate limiting does' },
+      { id: 'how', label: 'How it works technically' },
+      { id: 'where', label: 'Where to implement it' },
+    ],
+    items: [
+      { text: 'Prevents one client from spamming your API', zone: 'what', def: 'Rate limiting caps how many requests a single user or IP can make in a time window.' },
+      { text: 'Protects system from abuse and overload', zone: 'what', def: 'Without rate limiting one bad actor can bring down your API for everyone else.' },
+      { text: 'Solves the noisy neighbor problem', zone: 'what', def: 'Noisy neighbor = one tenant using so much resource it degrades the experience for all others.' },
+      { text: 'Redis tracks request count per user with TTL', zone: 'how', def: 'Each request increments a Redis counter keyed by user ID — the counter resets when its TTL expires.' },
+      { text: 'Returns 429 Too Many Requests when over limit', zone: 'how', def: '429 is the HTTP status code that tells the client they have exceeded their allowed request rate.' },
+      { text: 'Counter resets every 60 seconds via TTL', zone: 'how', def: 'TTL on the Redis key means the count automatically clears after the time window — no manual cleanup.' },
+      { text: 'API gateway — first line of defense', zone: 'where', def: 'Implement at the gateway level so abusive requests are blocked before they reach your services.' },
+      { text: 'Service level — per endpoint limits', zone: 'where', def: 'Different endpoints can have different limits — a search endpoint might be stricter than a profile fetch.' },
+      { text: 'Both layers — most production systems', zone: 'where', def: 'Gateway for broad protection, service level for granular per-endpoint control — defense in depth.' },
+    ]
+  },
+  {
+    id: 'websockets', category: 'System Design', title: 'WebSockets vs Polling',
+    desc: 'Match each characteristic to the correct communication method.',
+    zones: [
+      { id: 'polling', label: 'Regular polling' },
+      { id: 'long', label: 'Long polling' },
+      { id: 'ws', label: 'WebSockets' },
+    ],
+    items: [
+      { text: 'Client asks server on a timer — any updates?', zone: 'polling', def: 'Regular polling fires an HTTP request every N seconds regardless of whether there is new data.' },
+      { text: 'Connection opens and closes every request', zone: 'polling', def: 'Each poll is a fresh HTTP request — TCP connection opens, gets a response, closes, repeat.' },
+      { text: 'Most wasteful — mostly empty responses', zone: 'polling', def: 'The majority of poll responses will be empty — wasted bandwidth and server load.' },
+      { text: 'Good for updates every 30+ seconds', zone: 'polling', def: 'When real-time doesnt matter and data changes slowly, polling is simple and good enough.' },
+      { text: 'Client connects, server holds until data ready', zone: 'long', def: 'Long polling keeps the connection open — the server only responds when it has something to send.' },
+      { text: 'Better than polling — less wasted requests', zone: 'long', def: 'No empty responses — each response contains actual data since the server waits for something to send.' },
+      { text: 'Good for notifications and alerts', zone: 'long', def: 'Near-real-time is fine for notifications — long polling is simpler than WebSockets for this.' },
+      { text: 'Persistent two-way connection', zone: 'ws', def: 'A WebSocket connection stays open indefinitely — either side can send data at any time.' },
+      { text: 'Either side can send data anytime', zone: 'ws', def: 'Unlike HTTP, the server can push data to the client without waiting for the client to ask.' },
+      { text: 'Truly real time — chat, live scores, collab', zone: 'ws', def: 'WebSockets power chat apps, collaborative editors, and live dashboards where instant updates matter.' },
+      { text: 'Most efficient — no repeated requests', zone: 'ws', def: 'One connection handles unlimited messages — far less overhead than repeated HTTP requests.' },
+    ]
+  },
+  {
+    id: 'sharding', category: 'System Design', title: 'Database Sharding',
+    desc: 'Match each concept to the correct sharding category.',
+    zones: [
+      { id: 'what', label: 'What sharding is' },
+      { id: 'strategies', label: 'Sharding strategies' },
+      { id: 'tradeoffs', label: 'Tradeoffs and challenges' },
+    ],
+    items: [
+      { text: 'Horizontally split data across multiple databases', zone: 'what', def: 'Instead of one giant database, sharding splits data across multiple database machines — each holds a slice.' },
+      { text: 'Each shard holds a subset of total data', zone: 'what', def: 'Shard 1 might hold users A-M, shard 2 users N-Z — together they hold everything.' },
+      { text: 'Horizontal scaling for databases', zone: 'what', def: 'Sharding is the database equivalent of adding more app servers — scale out instead of up.' },
+      { text: 'Range based — A-M on shard 1, N-Z on shard 2', zone: 'strategies', def: 'Split data by a value range — simple but can create hot spots if data isnt evenly distributed.' },
+      { text: 'Hash based — hash the key to pick shard', zone: 'strategies', def: 'Run the key through a hash function — result determines the shard. More even distribution than range.' },
+      { text: 'Geographic — US users shard 1, EU shard 2', zone: 'strategies', def: 'Split by geography — good for latency and data residency compliance (like GDPR).' },
+      { text: 'Cross shard queries are complex', zone: 'tradeoffs', def: 'If you need data from multiple shards, you have to query all of them and combine results in your app.' },
+      { text: 'Joins across shards nearly impossible at DB level', zone: 'tradeoffs', def: 'The database cant join data across different machines — your app server has to do it manually.' },
+      { text: 'Rebalancing is painful as data grows', zone: 'tradeoffs', def: 'If one shard gets too large, redistributing data to a new shard is a complex and risky operation.' },
+      { text: 'App server must do joins manually', zone: 'tradeoffs', def: 'Query shard A, query shard B, combine results in code — more complexity moved to the application layer.' },
+    ]
+  },
+  {
+    id: 'acid', category: 'System Design', title: 'ACID Transactions',
+    desc: 'Match each property to its definition.',
+    zones: [
+      { id: 'a', label: 'Atomic' },
+      { id: 'c', label: 'Consistent' },
+      { id: 'i', label: 'Isolated' },
+      { id: 'd', label: 'Durable' },
+    ],
+    items: [
+      { text: 'All or nothing — no partial updates ever', zone: 'a', def: 'If any step in a transaction fails, the entire thing rolls back — no half-written state.' },
+      { text: 'If one step fails the whole thing rolls back', zone: 'a', def: 'Deduct $500 from checking, fail to add to savings — both operations roll back automatically.' },
+      { text: 'DB goes from one valid state to another', zone: 'c', def: 'The total money across all accounts stays the same before and after a transfer — no money appears or vanishes.' },
+      { text: 'Money cannot appear or disappear', zone: 'c', def: 'Consistency enforces business rules — $500 leaving one account must arrive somewhere else.' },
+      { text: 'Concurrent transactions dont interfere', zone: 'i', def: 'Two transactions running at the same time behave as if they were running sequentially — no interference.' },
+      { text: 'Each transaction behaves as if its the only one', zone: 'i', def: 'Isolation prevents one transaction from seeing the partial changes of another mid-flight.' },
+      { text: 'Committed data survives crashes', zone: 'd', def: 'Once a transaction is committed, it stays committed — even if the server crashes immediately after.' },
+      { text: 'Written to disk before confirming success', zone: 'd', def: 'The database writes to a transaction log on disk before telling you it succeeded — crash-safe.' },
+    ]
+  },
+  {
+    id: 'blob', category: 'System Design', title: 'Blob Storage',
+    desc: 'Match each statement to the correct category.',
+    zones: [
+      { id: 'what', label: 'What blob storage is for' },
+      { id: 'why-not-db', label: 'Why NOT to store files in DB' },
+      { id: 'examples', label: 'Real world examples' },
+    ],
+    items: [
+      { text: 'Stores large binary files — images, videos, docs', zone: 'what', def: 'Blob storage is designed for unstructured files — anything that isnt rows and columns.' },
+      { text: 'Store the URL reference in DB, file in blob', zone: 'what', def: 'The database keeps a URL pointing to the blob — the actual file lives in blob storage not the DB.' },
+      { text: 'Cheap, massively scalable file storage', zone: 'what', def: 'Blob storage costs pennies per GB and scales to petabytes — far cheaper than database storage.' },
+      { text: 'Databases not designed for large binary files', zone: 'why-not-db', def: 'Databases are optimized for structured queries — storing large binary data defeats their purpose.' },
+      { text: 'Bloats database size rapidly', zone: 'why-not-db', def: 'A few thousand profile photos can balloon a database to hundreds of GB, slowing everything.' },
+      { text: 'Slow reads — ties up DB connections', zone: 'why-not-db', def: 'Reading a 5MB image from a DB ties up a connection that could be serving thousands of queries.' },
+      { text: 'DB storage far more expensive', zone: 'why-not-db', def: 'Database storage costs orders of magnitude more per GB than purpose-built blob storage.' },
+      { text: 'Azure Blob Storage — used in your current job', zone: 'examples', def: 'Microsofts blob storage service — containers hold files, files get a URL for access.' },
+      { text: 'AWS S3 — most common in interviews', zone: 'examples', def: 'Amazon Simple Storage Service — the most widely used blob storage in the world.' },
+      { text: 'Profile pictures, videos, firmware updates', zone: 'examples', def: 'Any large file that users upload or systems need to store long-term belongs in blob storage.' },
+    ]
+  },
+  {
+    id: 'cdn', category: 'System Design', title: 'CDNs',
+    desc: 'Sort these into the correct CDN category.',
+    zones: [
+      { id: 'what', label: 'What a CDN does' },
+      { id: 'good', label: 'Good for CDN' },
+      { id: 'bad', label: 'NOT for CDN' },
+    ],
+    items: [
+      { text: 'Network of servers distributed globally', zone: 'what', def: 'A CDN is hundreds of servers placed around the world — not one server, a whole network of them.' },
+      { text: 'Serves content from servers close to the user', zone: 'what', def: 'A user in Tokyo gets content from a Tokyo edge server, not from your US origin server.' },
+      { text: 'Reduces latency by cutting physical distance', zone: 'what', def: 'Data travels at the speed of light — less distance means less latency, faster load times.' },
+      { text: 'Images, videos, CSS, JavaScript files', zone: 'good', def: 'Static assets that are the same for every user are perfect CDN candidates.' },
+      { text: 'Static files — same for every user', zone: 'good', def: 'The same product image looks the same for every visitor — cache it globally on the CDN.' },
+      { text: 'Product photos, profile pictures', zone: 'good', def: 'Binary media files are large and read frequently — CDN dramatically speeds up delivery.' },
+      { text: 'Personalized feeds and dashboards', zone: 'bad', def: 'Your feed is unique to you — it cant be cached on a CDN because nobody elses feed is the same.' },
+      { text: 'Dynamic API responses', zone: 'bad', def: 'API responses that change per user, per request, or per second cant be meaningfully cached globally.' },
+      { text: 'User account data and balances', zone: 'bad', def: 'Sensitive, personalized, frequently-changing data must come from origin servers — never CDN.' },
+    ]
+  },
+  {
+    id: 'partitions', category: 'System Design', title: 'Message Queue Partitions',
+    desc: 'Match each Kafka concept to its correct definition.',
+    zones: [
+      { id: 'what', label: 'What partitions are' },
+      { id: 'keys', label: 'Partition keys' },
+      { id: 'consumers', label: 'Consumer group rules' },
+    ],
+    items: [
+      { text: 'Split one topic into multiple ordered lanes', zone: 'what', def: 'A topic with 3 partitions is like 3 parallel lanes — messages in each lane stay ordered.' },
+      { text: 'Unit of parallelism in Kafka', zone: 'what', def: 'More partitions = more consumers you can run in parallel = more throughput.' },
+      { text: 'Messages within a partition are ordered', zone: 'what', def: 'Ordering is guaranteed within a single partition — not across the whole topic.' },
+      { text: 'Same key always goes to same partition', zone: 'keys', def: 'Hashing the partition key ensures all messages for one device always land in the same partition.' },
+      { text: 'Guarantees ordering for a specific device/user', zone: 'keys', def: 'By using device_id as the key, all events from lock_01 stay ordered in one partition.' },
+      { text: 'No key — round robin across partitions', zone: 'keys', def: 'Without a key messages are distributed evenly — maximizes throughput but loses per-entity ordering.' },
+      { text: 'One consumer per partition max in a group', zone: 'consumers', def: 'A partition can only be read by one consumer at a time within a consumer group.' },
+      { text: 'More consumers than partitions — some idle', zone: 'consumers', def: 'If you have 6 partitions and 7 consumers, one consumer sits completely idle doing nothing.' },
+      { text: 'Want more parallelism — increase partition count', zone: 'consumers', def: 'To use more consumers effectively you must first increase the number of partitions.' },
+    ]
+  },
+  {
+    id: 'idempotency', category: 'System Design', title: 'Idempotency',
+    desc: 'Match each concept to the right category.',
+    zones: [
+      { id: 'what', label: 'What idempotency means' },
+      { id: 'how', label: 'How to implement it' },
+      { id: 'http', label: 'HTTP method idempotency' },
+    ],
+    items: [
+      { text: 'Doing same operation twice = same result as once', zone: 'what', def: 'An idempotent operation can be safely repeated without causing unintended side effects.' },
+      { text: 'Protects against duplicate requests from retries', zone: 'what', def: 'Network timeouts cause clients to retry — without idempotency a retry could double-charge a user.' },
+      { text: 'Critical for payments — prevent double charge', zone: 'what', def: 'A user clicks Pay, network times out, client retries — idempotency ensures they only get charged once.' },
+      { text: 'Client generates UUID per operation', zone: 'how', def: 'Before sending, the client creates a unique ID for this specific operation — same ID on retries.' },
+      { text: 'Server checks if key seen before processing', zone: 'how', def: 'If the server has seen this idempotency key before, it returns the cached result without reprocessing.' },
+      { text: 'Store seen keys in Redis for fast lookup', zone: 'how', def: 'Redis is fast — checking if a key exists takes microseconds, perfect for high-volume APIs.' },
+      { text: 'GET — idempotent, same result every time', zone: 'http', def: 'Reading data never changes state — GET 100 times gives the same result each time.' },
+      { text: 'PUT, DELETE — idempotent', zone: 'http', def: 'PUT replaces a resource — doing it twice with the same data leaves the same result. DELETE removes once.' },
+      { text: 'POST — NOT idempotent, creates new each time', zone: 'http', def: 'POST creates a new resource — calling it twice creates two resources, not one.' },
+    ]
+  },
+  {
+    id: 'fanout', category: 'System Design', title: 'Fan Out Pattern',
+    desc: 'Sort these into the correct fan out category.',
+    zones: [
+      { id: 'what', label: 'What fan out is' },
+      { id: 'why', label: 'Why to use it' },
+      { id: 'examples', label: 'Real world examples' },
+    ],
+    items: [
+      { text: 'One event triggers multiple independent consumers', zone: 'what', def: 'One thing happens — order placed — and multiple services react to it simultaneously.' },
+      { text: 'Publisher doesnt know who is subscribing', zone: 'what', def: 'The order service just publishes an event — it doesnt care who listens or what they do with it.' },
+      { text: 'Each consumer reacts independently and async', zone: 'what', def: 'Email, inventory, and analytics all consume the same event on their own schedule.' },
+      { text: 'If one consumer fails others keep running', zone: 'why', def: 'If the email service crashes, inventory and analytics still process the event — no cascade failure.' },
+      { text: 'Decouples services from each other', zone: 'why', def: 'Adding a new consumer (e.g. a fraud detection service) requires zero changes to the publisher.' },
+      { text: 'No single point of failure in the flow', zone: 'why', def: 'Fan out distributes risk — no one service failing breaks the whole downstream chain.' },
+      { text: 'Order placed — notify restaurant, driver, analytics', zone: 'examples', def: 'One order event fans out to three independent consumers each doing their own thing.' },
+      { text: 'User signed up — email, push, analytics all fire', zone: 'examples', def: 'Sign up event fans out to welcome email, push notification, and analytics tracking simultaneously.' },
+      { text: 'IoT device event — enrich, store, alert', zone: 'examples', def: 'A device publishes telemetry — enrichment, storage, and alerting services all consume it independently.' },
+    ]
+  },
+  {
+    id: 'canary', category: 'System Design', title: 'Canary Deployment',
+    desc: 'Match each concept to the correct canary category.',
+    zones: [
+      { id: 'what', label: 'What canary deployment is' },
+      { id: 'flow', label: 'How it works' },
+      { id: 'vs', label: 'Canary vs feature flags' },
+    ],
+    items: [
+      { text: 'Roll out new version to small % of traffic first', zone: 'what', def: 'Instead of deploying to everyone at once, start with 5-10% of users to validate the new version.' },
+      { text: 'Limit blast radius if something goes wrong', zone: 'what', def: 'If the new version has a bug, only the small canary % of users are affected — not everyone.' },
+      { text: 'Safer than deploying to 100% at once', zone: 'what', def: 'Named after canaries in coal mines — send a small signal first to detect danger before full exposure.' },
+      { text: '10% traffic to new version, 90% to stable', zone: 'flow', def: 'The load balancer routes a small slice of traffic to the new version pods while most goes to stable.' },
+      { text: 'Monitor error rates, latency, CPU', zone: 'flow', def: 'Watch the canary metrics closely — if anything spikes compared to stable, roll back immediately.' },
+      { text: 'Healthy — increase to 100% gradually', zone: 'flow', def: 'If the canary looks good, incrementally increase traffic — 10% → 25% → 50% → 100%.' },
+      { text: 'Problems — route all traffic back to stable', zone: 'flow', def: 'Instant rollback — flip traffic back to the stable version with zero downtime.' },
+      { text: 'Canary — deploy to subset of users', zone: 'vs', def: 'Canary is a deployment strategy — you ship code to a slice of infrastructure.' },
+      { text: 'Feature flag — flip switch without deploying', zone: 'vs', def: 'Feature flags control features at runtime — no deployment needed, just toggle a config value.' },
+      { text: 'Both used together for maximum safety', zone: 'vs', def: 'Deploy with a canary, hide the feature behind a flag — double safety net.' },
+    ]
+  },
+  {
+    id: 'threading', category: 'System Design', title: 'Multithreading vs Async',
+    desc: 'Sort these concepts into the correct category.',
+    zones: [
+      { id: 'thread', label: 'True multithreading' },
+      { id: 'async', label: 'Async / await' },
+      { id: 'io-cpu', label: 'I/O bound vs CPU bound' },
+    ],
+    items: [
+      { text: 'Multiple threads running in parallel on CPU cores', zone: 'thread', def: 'True multithreading uses multiple CPU cores simultaneously — real parallel execution.' },
+      { text: 'Thread pool — spread work across cores', zone: 'thread', def: 'A thread pool pre-creates threads and assigns work to them — avoids the cost of creating threads on demand.' },
+      { text: 'Good for CPU heavy work like image processing', zone: 'thread', def: 'If your code is actively computing — transforming data, hashing, encoding — use thread pools.' },
+      { text: 'Parallel.ForEach in C#, ExecutorService in Java', zone: 'thread', def: 'Language-level APIs for distributing CPU work across a pool of threads.' },
+      { text: 'One thread that frees itself while waiting', zone: 'async', def: 'Async/await releases the thread while waiting for I/O — the thread can handle other work.' },
+      { text: 'No extra threads created', zone: 'async', def: 'Async is not multithreaded — it is one thread managing multiple in-flight operations efficiently.' },
+      { text: 'Good for I/O heavy work like DB calls', zone: 'async', def: 'While waiting for a DB response, the thread is free — async keeps it productive.' },
+      { text: 'Task.WhenAll in C#, CompletableFuture in Java', zone: 'async', def: 'Fire multiple async operations at once and await all of them — reduces total wait time.' },
+      { text: 'I/O bound — thread is idle waiting on external', zone: 'io-cpu', def: 'I/O bound work spends most time waiting — DB calls, HTTP requests, file reads. Use async.' },
+      { text: 'CPU bound — thread is actively crunching data', zone: 'io-cpu', def: 'CPU bound work keeps the CPU busy — image processing, encryption, complex math. Use threads.' },
+      { text: 'Kafka reads, DB queries = I/O bound use async', zone: 'io-cpu', def: 'Your IoT microservices are mostly I/O bound — awaiting Kafka and Cosmos DB calls.' },
+    ]
+  },
+  {
+    id: 'aspnet-spring', category: 'Frameworks', title: 'ASP.NET vs Spring Boot',
+    desc: 'Match each term to the correct framework.',
+    zones: [
+      { id: 'aspnet', label: 'ASP.NET Core (C#)' },
+      { id: 'spring', label: 'Java Spring Boot' },
+      { id: 'both', label: 'Both frameworks' },
+    ],
+    items: [
+      { text: '[ApiController] [Route] attributes', zone: 'aspnet', def: 'C# attributes that mark a class as an API controller and define its URL route.' },
+      { text: 'Program.cs — configure services and middleware', zone: 'aspnet', def: 'The entry point of an ASP.NET app — register your DI services and configure the middleware pipeline here.' },
+      { text: 'appsettings.json — config and secrets', zone: 'aspnet', def: 'ASP.NET reads configuration from appsettings.json — connection strings, API keys, settings.' },
+      { text: 'Entity Framework Core — ORM', zone: 'aspnet', def: 'EF Core maps C# classes to database tables — write C# instead of SQL.' },
+      { text: 'app.UseAuthentication() middleware', zone: 'aspnet', def: 'Adds auth middleware to the pipeline — every request passes through this before hitting controllers.' },
+      { text: '@RestController @RequestMapping annotations', zone: 'spring', def: 'Java annotations that mark a class as a REST controller and define its base URL path.' },
+      { text: '@Autowired — inject dependencies', zone: 'spring', def: 'Spring automatically injects the required dependency into the field or constructor.' },
+      { text: 'application.properties — config', zone: 'spring', def: 'Spring Boot reads configuration from application.properties or application.yml.' },
+      { text: 'JPA / Hibernate — ORM', zone: 'spring', def: 'Java Persistence API with Hibernate — maps Java objects to database tables like EF Core does in C#.' },
+      { text: 'OncePerRequestFilter — middleware equivalent', zone: 'spring', def: 'A Spring filter that runs once per request — equivalent to ASP.NET middleware.' },
+      { text: 'Controller → Service → Repository → DB pattern', zone: 'both', def: 'Both frameworks follow the same layered architecture — request handling, business logic, data access.' },
+      { text: 'Dependency injection built in', zone: 'both', def: 'Both ASP.NET Core and Spring Boot have DI containers built in — no third party library needed.' },
+    ]
+  },
+  {
+    id: 'di', category: 'Frameworks', title: 'Dependency Injection',
+    desc: 'Match each DI concept to the correct category.',
+    zones: [
+      { id: 'what', label: 'What DI is' },
+      { id: 'lifetimes', label: 'DI lifetimes / scopes' },
+      { id: 'why', label: 'Why DI matters' },
+    ],
+    items: [
+      { text: 'Classes dont create their own dependencies', zone: 'what', def: 'Instead of calling new UserService() inside a controller, the container creates and provides it.' },
+      { text: 'Container creates and injects them automatically', zone: 'what', def: 'The DI container manages object creation — you declare what you need and it appears.' },
+      { text: 'Singleton — one instance for app lifetime', zone: 'lifetimes', def: 'Created once when the app starts — same instance shared across all requests forever.' },
+      { text: 'Scoped / Request — one per HTTP request', zone: 'lifetimes', def: 'A new instance is created for each request and disposed when the request ends.' },
+      { text: 'Transient / Prototype — new instance every time', zone: 'lifetimes', def: 'A brand new instance is created every time the dependency is requested from the container.' },
+      { text: 'Decouples classes from their implementations', zone: 'why', def: 'Classes depend on interfaces not concrete types — easy to swap implementations without changing callers.' },
+      { text: 'Easy to swap implementations', zone: 'why', def: 'Change one line in Program.cs or a @Bean and every class that uses the interface gets the new version.' },
+      { text: 'Easy to mock in unit tests', zone: 'why', def: 'Inject a mock implementation in tests instead of the real one — no database needed to test business logic.' },
+    ]
+  },
+  {
+    id: 'cicd', category: 'Tooling', title: 'CI/CD Pipeline',
+    desc: 'Sort these into the correct pipeline stage.',
+    zones: [
+      { id: 'ci', label: 'Continuous Integration (CI)' },
+      { id: 'cd', label: 'Continuous Delivery (CD)' },
+      { id: 'cdeploy', label: 'Continuous Deployment' },
+    ],
+    items: [
+      { text: 'Lint — check code style and formatting', zone: 'ci', def: 'Automated code style checking — catches formatting issues before humans review.' },
+      { text: 'Unit tests, integration tests run automatically', zone: 'ci', def: 'Every commit triggers automated test runs — catches regressions early.' },
+      { text: 'Build and compile the application', zone: 'ci', def: 'Compile the code into a runnable artifact — catches compilation errors before deployment.' },
+      { text: 'Containerize — build Docker image', zone: 'ci', def: 'Package the compiled app into a Docker image and push to a registry like Azure ACR.' },
+      { text: 'Pipeline breaks on any failed stage', zone: 'ci', def: 'If tests fail or build fails the pipeline stops — nothing moves forward until its fixed.' },
+      { text: 'Manual approval gate before production', zone: 'cd', def: 'A human must explicitly approve before the pipeline deploys to production.' },
+      { text: 'Human verifies before deploy goes live', zone: 'cd', def: 'Someone checks dashboards, checks test results, and clicks Approve — then prod deploys.' },
+      { text: 'Code is always ready — humans decide when', zone: 'cd', def: 'The pipeline keeps everything deployable — the decision of when to ship is a human choice.' },
+      { text: 'No gate — every passing build ships automatically', zone: 'cdeploy', def: 'If all tests pass the pipeline automatically deploys to production without human intervention.' },
+      { text: 'Riskier — requires excellent test coverage', zone: 'cdeploy', def: 'Without a human gate your test suite is your only safety net — it must be comprehensive.' },
+    ]
+  },
+  {
+    id: 'kubernetes', category: 'Tooling', title: 'Kubernetes Architecture',
+    desc: 'Match each K8s component to what it does.',
+    zones: [
+      { id: 'ingress', label: 'Ingress' },
+      { id: 'service', label: 'Service' },
+      { id: 'deployment', label: 'Deployment' },
+      { id: 'pod', label: 'Pod' },
+      { id: 'config', label: 'Secrets / ConfigMap / HPA' },
+    ],
+    items: [
+      { text: 'Routes external traffic into the cluster', zone: 'ingress', def: 'Ingress is the front door — it receives traffic from outside and routes it to the right service inside.' },
+      { text: 'Stable endpoint — load balances across pods', zone: 'service', def: 'A Service gives pods a stable DNS name and IP — it load balances requests across all healthy pods.' },
+      { text: 'Manages replicas, rolling updates, rollbacks', zone: 'deployment', def: 'A Deployment declares desired state — how many replicas, which image — K8s makes it so.' },
+      { text: 'Smallest deployable unit — runs your container', zone: 'pod', def: 'A pod is one instance of your app running — if it dies K8s replaces it automatically.' },
+      { text: '1 or more containers sharing same network', zone: 'pod', def: 'Containers in the same pod share a network namespace — they can talk to each other on localhost.' },
+      { text: 'Secrets — encrypted conn strings and API keys', zone: 'config', def: 'Kubernetes Secrets store sensitive config — injected as env vars into pods at runtime.' },
+      { text: 'ConfigMap — non-sensitive env vars and settings', zone: 'config', def: 'ConfigMaps store non-sensitive config data — feature flags, API URLs, environment settings.' },
+      { text: 'HPA — auto scales pods based on CPU/memory', zone: 'config', def: 'Horizontal Pod Autoscaler watches metrics and automatically adds or removes pod replicas.' },
+    ]
+  },
+  {
+    id: 'docker', category: 'Tooling', title: 'Docker',
+    desc: 'Match each Docker concept to its definition.',
+    zones: [
+      { id: 'build', label: 'Build flow' },
+      { id: 'concepts', label: 'Key concepts' },
+      { id: 'k8s', label: 'Docker + Kubernetes' },
+    ],
+    items: [
+      { text: 'Dockerfile — defines how to build the image', zone: 'build', def: 'A Dockerfile is a recipe — FROM base image, COPY your code, RUN install commands, set ENTRYPOINT.' },
+      { text: 'docker build — creates an image from Dockerfile', zone: 'build', def: 'Running docker build executes the Dockerfile instructions and produces a layered image.' },
+      { text: 'Registry — stores images (Azure ACR, Docker Hub)', zone: 'build', def: 'A registry is a repository for Docker images — push images up, pull them down on any machine.' },
+      { text: 'docker push / pull — share images via registry', zone: 'build', def: 'Push uploads your image to the registry, pull downloads it — how images move between machines.' },
+      { text: 'Image — snapshot of app, read only', zone: 'concepts', def: 'An image is a frozen, immutable snapshot of your app and all its dependencies at build time.' },
+      { text: 'Container — running instance of an image', zone: 'concepts', def: 'A container is a live running image — start one image, get a container. Start it again, get another.' },
+      { text: 'Image = blueprint, container = running house', zone: 'concepts', def: 'The image is the plan, the container is the actual built thing — one blueprint, many houses.' },
+      { text: 'Containers share OS — lighter than VMs', zone: 'concepts', def: 'Containers share the host OS kernel — much lighter than VMs which each run a full operating system.' },
+      { text: 'Docker builds the image', zone: 'k8s', def: 'Docker is the build tool — it packages your app into an image stored in a registry.' },
+      { text: 'Kubernetes runs and orchestrates containers', zone: 'k8s', def: 'Kubernetes pulls images from the registry and runs them as containers — handles scaling and restarts.' },
+    ]
+  },
+  {
+    id: 'auth0', category: 'Tooling', title: 'Auth0',
+    desc: 'Match each Auth0 concept to its category.',
+    zones: [
+      { id: 'what', label: 'What Auth0 is' },
+      { id: 'flow', label: 'Login flow' },
+      { id: 'concepts', label: 'Key Auth0 concepts' },
+    ],
+    items: [
+      { text: 'Identity as a service — outsource your auth', zone: 'what', def: 'Auth0 is a third-party identity provider — they handle auth so you dont build it yourself.' },
+      { text: 'Handles tokens, user management, social login', zone: 'what', def: 'Auth0 manages the whole auth stack — JWTs, refresh tokens, password resets, Google login.' },
+      { text: 'Dont reinvent auth — use it to move fast', zone: 'what', def: 'Building auth correctly is hard and security-critical — Auth0 lets you skip that complexity.' },
+      { text: 'App redirects to Auth0 universal login page', zone: 'flow', def: 'Instead of your own login form, users are sent to Auth0s hosted login page.' },
+      { text: 'Auth0 verifies credentials', zone: 'flow', def: 'Auth0 handles the actual credential check — against its own user store or external identity providers.' },
+      { text: 'Returns access token, ID token, refresh token', zone: 'flow', def: 'Three tokens: access token for API calls, ID token for user info, refresh token to renew access.' },
+      { text: 'Tenant — your Auth0 workspace (dev/staging/prod)', zone: 'concepts', def: 'A tenant is an isolated Auth0 environment — you typically have one per deployment environment.' },
+      { text: 'Application — your frontend or backend registered', zone: 'concepts', def: 'You register each app in Auth0 — it gets a client ID used to identify which app is requesting auth.' },
+      { text: 'Actions — run custom code during login flow', zone: 'concepts', def: 'Actions let you inject custom logic during auth — add custom claims, enrich tokens, call external APIs.' },
+      { text: 'Social connections — Google, GitHub, Microsoft', zone: 'concepts', def: 'Auth0 handles OAuth with social providers — users click Sign in with Google and Auth0 does the rest.' },
+    ]
+  },
+  {
+    id: 'pubsub', category: 'System Design', title: 'Pub/Sub Pattern',
+    desc: 'Match each pub/sub concept to its category.',
+    zones: [
+      { id: 'what', label: 'What pub/sub is' },
+      { id: 'vs-queue', label: 'Pub/sub vs regular queue' },
+      { id: 'examples', label: 'Real world use cases' },
+    ],
+    items: [
+      { text: 'Publisher sends events to a topic', zone: 'what', def: 'A publisher broadcasts events to a topic — it doesnt address any specific consumer.' },
+      { text: 'Multiple subscribers listen to same topic', zone: 'what', def: 'Any number of services can subscribe to a topic and each receives a copy of every message.' },
+      { text: 'Publisher doesnt know who is subscribing', zone: 'what', def: 'Complete decoupling — add new subscribers without changing the publisher at all.' },
+      { text: 'Regular queue — one consumer per message', zone: 'vs-queue', def: 'In a standard queue each message is consumed by exactly one consumer — point to point.' },
+      { text: 'Pub/sub — many consumers get same message', zone: 'vs-queue', def: 'In pub/sub every subscriber gets a copy — broadcast not point to point.' },
+      { text: 'Pub/sub is broadcast, queue is point-to-point', zone: 'vs-queue', def: 'Queue = one recipient. Pub/sub = all subscribers. Choose based on whether you need fan out.' },
+      { text: 'Live sports score — push to all connected users', zone: 'examples', def: 'One score update event fans out to millions of subscribers simultaneously via pub/sub.' },
+      { text: 'Order placed — fan out to email, inventory, analytics', zone: 'examples', def: 'One order event is consumed by three independent services — classic pub/sub fan out.' },
+      { text: 'IoT device event — multiple services react', zone: 'examples', def: 'Your IoT pipeline — one device event fans out to enrichment, storage, and alerting services.' },
+    ]
+  },
+  {
+    id: 'circuit-breaker', category: 'System Design', title: 'Circuit Breaker Pattern',
+    desc: 'Match each circuit breaker concept to its category.',
+    zones: [
+      { id: 'what', label: 'What a circuit breaker is' },
+      { id: 'states', label: 'Circuit breaker states' },
+      { id: 'why', label: 'Why to use it' },
+    ],
+    items: [
+      { text: 'Stops calling a failing service automatically', zone: 'what', def: 'When a downstream service starts failing, the circuit breaker trips and stops sending it requests.' },
+      { text: 'Like an electrical circuit breaker — trips on failure', zone: 'what', def: 'Just like a home circuit breaker cuts power to prevent damage, this stops calls to prevent cascade failures.' },
+      { text: 'Prevents cascade failures across services', zone: 'what', def: 'Without a circuit breaker, one slow service can cause every service that calls it to back up and fail.' },
+      { text: 'Closed — everything working, requests flow normally', zone: 'states', def: 'Closed is the normal state — requests go through, the circuit is intact.' },
+      { text: 'Open — too many failures, stop calling service', zone: 'states', def: 'After too many failures the circuit opens — requests are rejected immediately without calling the service.' },
+      { text: 'Half-open — try one request to see if service recovered', zone: 'states', def: 'After a timeout the circuit tries one test request — if it succeeds, circuit closes again.' },
+      { text: 'Fail fast — dont wait for timeout every request', zone: 'why', def: 'With circuit breaker open, requests fail immediately instead of waiting 30 seconds to time out.' },
+      { text: 'Give failing service time to recover', zone: 'why', def: 'Stopping traffic gives the struggling service breathing room to recover without being hammered.' },
+      { text: 'Protect your system from downstream failures', zone: 'why', def: 'Your service stays healthy even when dependencies fail — the circuit breaker absorbs the impact.' },
+    ]
+  },
+  {
+    id: 'retry', category: 'System Design', title: 'Retry Policies & Exponential Backoff',
+    desc: 'Match each retry concept to its category.',
+    zones: [
+      { id: 'what', label: 'What retry policies are' },
+      { id: 'backoff', label: 'Exponential backoff' },
+      { id: 'caution', label: 'When to be careful with retries' },
+    ],
+    items: [
+      { text: 'Automatically retry failed requests', zone: 'what', def: 'Instead of failing immediately on a transient error, retry the operation a set number of times.' },
+      { text: 'Set max retry count before giving up', zone: 'what', def: 'Retry 3 times then fail — prevents infinite retry loops that could cause bigger problems.' },
+      { text: 'Wait between retries — dont hammer failing service', zone: 'what', def: 'Retrying instantly over and over makes a struggling service worse — wait between attempts.' },
+      { text: 'Wait time doubles with each retry', zone: 'backoff', def: 'Exponential backoff: wait 1s, then 2s, then 4s, then 8s — gives the service time to recover.' },
+      { text: '1s, 2s, 4s, 8s, 16s — each attempt waits longer', zone: 'backoff', def: 'The delay grows exponentially — this is why its called exponential backoff.' },
+      { text: 'Prevents thundering herd on recovering service', zone: 'backoff', def: 'Without backoff all clients retry at the same time and overwhelm the recovering service again.' },
+      { text: 'Add jitter — random delay to spread retries', zone: 'backoff', def: 'Jitter adds randomness to backoff — clients retry at slightly different times, smoothing load.' },
+      { text: 'Payments — retry can cause double charge', zone: 'caution', def: 'Non-idempotent operations are dangerous to retry — always use idempotency keys with payment retries.' },
+      { text: 'Use idempotency keys when retrying payments', zone: 'caution', def: 'The idempotency key ensures a retried payment request is recognized and deduplicated server-side.' },
+      { text: 'Dont retry if service is down — use circuit breaker', zone: 'caution', def: 'Retrying into a completely downed service is pointless — a circuit breaker stops that automatically.' },
+    ]
+  },
+  {
+    id: 'observability', category: 'System Design', title: 'Observability — The 3 Pillars',
+    desc: 'Match each concept to the correct observability pillar.',
+    zones: [
+      { id: 'logs', label: 'Logging' },
+      { id: 'metrics', label: 'Metrics' },
+      { id: 'traces', label: 'Distributed tracing' },
+    ],
+    items: [
+      { text: 'Text records of what happened and when', zone: 'logs', def: 'Logs are timestamped text entries that record events — errors, warnings, info messages.' },
+      { text: 'Debug individual events and errors', zone: 'logs', def: 'When something goes wrong you read logs to understand exactly what happened and when.' },
+      { text: 'Application Insights, Splunk, ELK stack', zone: 'logs', def: 'Popular logging tools — collect, index, and search logs across all your services.' },
+      { text: 'Structured — include timestamp, level, context', zone: 'logs', def: 'Good logs include severity level, timestamp, service name, correlation ID, and relevant context.' },
+      { text: 'Numerical measurements over time', zone: 'metrics', def: 'Metrics are numbers that change over time — request rate, error rate, CPU, memory, latency.' },
+      { text: 'CPU usage, error rate, request latency', zone: 'metrics', def: 'The core health indicators — these tell you if your system is behaving normally at a glance.' },
+      { text: 'Alerts when threshold crossed', zone: 'metrics', def: 'Set up alerts on metrics — error rate above 1% for 5 minutes triggers an incident.' },
+      { text: 'Prometheus, Grafana, Azure Monitor', zone: 'metrics', def: 'Prometheus collects metrics, Grafana visualizes them — a standard production monitoring stack.' },
+      { text: 'Follow one request across multiple services', zone: 'traces', def: 'A trace follows a single user request through every service it touches — end to end.' },
+      { text: 'Find where latency is happening in the chain', zone: 'traces', def: 'Traces show exactly which service is slow — is it the DB call, the auth check, or the API?' },
+      { text: 'Correlation ID ties requests across services', zone: 'traces', def: 'A unique ID attached to a request propagates through all services — ties logs together across the system.' },
+      { text: 'Jaeger, Zipkin, Azure Application Insights', zone: 'traces', def: 'Distributed tracing tools — visualize the full request path across all services as a timeline.' },
+    ]
+  }
+];
+
+let completed = new Set();
+let currentTopic = null;
+let draggedItem = null;
+let glossaryOpen = false;
+
+function updateProgress() {
+  const pct = Math.round((completed.size / topics.length) * 100);
+  document.getElementById('progressText').textContent = `${completed.size} / ${topics.length} completed`;
+  document.getElementById('progressFill').style.width = pct + '%';
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const categories = [...new Set(topics.map(t => t.category))];
+  sidebar.innerHTML = categories.map(cat => {
+    const catTopics = topics.filter(t => t.category === cat);
+    return `
+      <div class="sidebar-section">${cat}</div>
+      ${catTopics.map(t => `
+        <button class="topic-btn ${currentTopic?.id === t.id ? 'active' : ''} ${completed.has(t.id) ? 'completed' : ''}"
+          onclick="loadTopic('${t.id}')">
+          ${t.title}
+          <span class="status">${completed.has(t.id) ? '✓' : ''}</span>
+        </button>
+      `).join('')}
+    `;
+  }).join('');
+}
+
+function loadTopic(id) {
+  currentTopic = topics.find(t => t.id === id);
+  glossaryOpen = false;
+  renderTopic();
+  renderSidebar();
+}
+
+function renderTopic() {
+  const t = currentTopic;
+  const shuffled = [...t.items].sort(() => Math.random() - 0.5);
+  const cols = t.zones.length <= 3 ? t.zones.length : 2;
+
+  document.getElementById('content').innerHTML = `
+    <div class="quiz-header">
+      <div>
+        <div class="topic-tag">${t.category}</div>
+        <div class="quiz-title">${t.title}</div>
+        <div class="quiz-desc">${t.desc}</div>
+      </div>
+      <button class="reset-btn" onclick="loadTopic('${t.id}')">↺ Reset</button>
+    </div>
+
+    <div class="drag-section">
+      <h3>Drag these items</h3>
+      <div class="items-bank" id="bank">
+        ${shuffled.map((item, i) => `
+          <div class="drag-item" draggable="true" data-idx="${i}" data-text="${escAttr(item.text)}" data-zone="${item.zone}"
+            ondragstart="onDragStart(event)" ondragend="onDragEnd(event)">
+            ${item.text}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="drag-section">
+      <h3>Drop zones</h3>
+      <div class="drop-zones" style="grid-template-columns: repeat(${cols}, 1fr)">
+        ${t.zones.map(zone => `
+          <div class="drop-zone-wrapper">
+            <div class="drop-zone-label">
+              ${zone.label}
+              ${zone.hint ? `<span class="hint">— ${zone.hint}</span>` : ''}
+            </div>
+            <div class="drop-zone" id="zone-${zone.id}"
+              ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${zone.id}')">
+              <span class="drop-zone-placeholder">Drop items here</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- GLOSSARY -->
+    <div class="glossary-section">
+      <div class="glossary-header" onclick="toggleGlossary()">
+        <h3>📖 Term definitions — click to ${glossaryOpen ? 'hide' : 'show'}</h3>
+        <span class="glossary-toggle">${glossaryOpen ? '▲ hide' : '▼ show'}</span>
+      </div>
+      <div class="glossary-body ${glossaryOpen ? 'open' : ''}" id="glossaryBody">
+        <div class="glossary-grid">
+          ${t.items.map(item => `
+            <div class="glossary-item">
+              <div class="glossary-term">${item.text}</div>
+              <div class="glossary-def">${item.def}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="btn-row">
+      <button class="check-btn" onclick="checkAnswers()">Check answers</button>
+      <button class="next-btn" id="nextBtn" onclick="goNext()">Next topic →</button>
+      <span class="score-badge" id="scoreBadge"></span>
+    </div>
+  `;
+}
+
+function toggleGlossary() {
+  glossaryOpen = !glossaryOpen;
+  const body = document.getElementById('glossaryBody');
+  const header = body.previousElementSibling;
+  body.classList.toggle('open', glossaryOpen);
+  header.querySelector('h3').textContent = `📖 Term definitions — click to ${glossaryOpen ? 'hide' : 'show'}`;
+  header.querySelector('.glossary-toggle').textContent = glossaryOpen ? '▲ hide' : '▼ show';
+}
+
+function escAttr(str) {
+  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function onDragStart(e) {
+  draggedItem = e.target;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragEnd(e) { e.target.classList.remove('dragging'); }
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+function onDrop(e, zoneId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!draggedItem) return;
+
+  const placeholder = e.currentTarget.querySelector('.drop-zone-placeholder');
+  if (placeholder) placeholder.remove();
+
+  const clone = document.createElement('div');
+  clone.className = 'drag-item';
+  clone.textContent = draggedItem.dataset.text;
+  clone.dataset.text = draggedItem.dataset.text;
+  clone.dataset.zone = draggedItem.dataset.zone;
+  clone.draggable = true;
+  clone.ondragstart = onDragStart;
+  clone.ondragend = onDragEnd;
+  e.currentTarget.appendChild(clone);
+
+  draggedItem.remove();
+  draggedItem = null;
+}
+
+function checkAnswers() {
+  let correct = 0;
+  const total = currentTopic.items.length;
+
+  currentTopic.zones.forEach(zone => {
+    const zoneEl = document.getElementById(`zone-${zone.id}`);
+    zoneEl.querySelectorAll('.drag-item').forEach(item => {
+      if (item.dataset.zone === zone.id) {
+        item.classList.add('correct');
+        item.classList.remove('incorrect');
+        correct++;
+      } else {
+        item.classList.add('incorrect');
+        item.classList.remove('correct');
+        setTimeout(() => item.classList.remove('incorrect'), 400);
+      }
+    });
+  });
+
+  const bank = document.getElementById('bank');
+  const unplaced = bank.querySelectorAll('.drag-item').length;
+  const feedback = document.getElementById('feedback');
+  const scoreBadge = document.getElementById('scoreBadge');
+  const nextBtn = document.getElementById('nextBtn');
+  const pct = Math.round((correct / total) * 100);
+
+  if (correct === total && unplaced === 0) {
+    feedback.className = 'feedback show success';
+    feedback.innerHTML = `<strong>🎉 Perfect!</strong> All ${total} items correctly placed.`;
+    scoreBadge.className = 'score-badge show perfect';
+    scoreBadge.textContent = `${correct}/${total} — Perfect`;
+    completed.add(currentTopic.id);
+    updateProgress();
+  } else if (pct >= 70) {
+    feedback.className = 'feedback show partial';
+    feedback.innerHTML = `<strong>Almost there!</strong> ${correct}/${total} correct. Check highlighted items — definitions below might help.`;
+    scoreBadge.className = 'score-badge show good';
+    scoreBadge.textContent = `${correct}/${total}`;
+    if (!glossaryOpen) { glossaryOpen = true; toggleGlossary(); }
+  } else {
+    feedback.className = 'feedback show error';
+    feedback.innerHTML = `<strong>Keep going!</strong> ${correct}/${total} correct. Check the definitions section below and try again.`;
+    scoreBadge.className = 'score-badge show retry';
+    scoreBadge.textContent = `${correct}/${total} — Review needed`;
+    if (!glossaryOpen) { glossaryOpen = true; toggleGlossary(); }
+  }
+
+  nextBtn.classList.add('show');
+}
+
+function goNext() {
+  const idx = topics.findIndex(t => t.id === currentTopic.id);
+  loadTopic(topics[(idx + 1) % topics.length].id);
+}
+
+function renderHome() {
+  document.getElementById('content').innerHTML = `
+    <div class="home">
+      <div>
+        <div class="topic-tag">System Design Interview Prep</div>
+        <h1>Drag & Drop <span>Quiz</span></h1>
+        <p>Reinforce your system design knowledge by dragging concepts to the right categories. Pick a topic from the sidebar to start. Each page has a definitions section at the bottom to help when you get stuck.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="num">${topics.length}</div><div class="label">Total topics</div></div>
+        <div class="stat-card"><div class="num" id="homeCompleted">0</div><div class="label">Completed</div></div>
+        <div class="stat-card"><div class="num" id="homePct">0%</div><div class="label">Mastered</div></div>
+      </div>
+      <button class="check-btn" onclick="loadTopic('${topics[0].id}')">Start first topic →</button>
+    </div>
+  `;
+}
+
+renderHome();
+renderSidebar();
+</script>
+</body>
+</html>
