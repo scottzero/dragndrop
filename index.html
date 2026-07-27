@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>System Design Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1117">
+<title>SysDesign Quiz</title>
 <style>
   :root {
     --bg: #0f1117;
@@ -16,111 +19,236 @@
     --text2: #8b90b8;
     --success: #4ecca3;
     --fail: #ff6b6b;
-    --font: 'Inter', system-ui, sans-serif;
+    --warn: #ffc864;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; display: flex; flex-direction: column; }
-  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 56px; position: sticky; top: 0; z-index: 100; }
-  .nav-logo { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-right: auto; }
-  .nav-progress { font-size: 12px; color: var(--text2); }
-  .progress-bar { width: 120px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s ease; }
-  main { flex: 1; display: flex; overflow: hidden; height: calc(100vh - 56px); }
-  aside { width: 240px; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px 0; flex-shrink: 0; }
-  .sidebar-section { padding: 8px 16px 4px; font-size: 10px; font-weight: 700; color: var(--text2); letter-spacing: 0.12em; text-transform: uppercase; }
-  .topic-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 16px; background: none; border: none; color: var(--text2); font-size: 13px; text-align: left; cursor: pointer; transition: all 0.15s; border-left: 2px solid transparent; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; }
+
+  /* ── TOP NAV ── */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 16px; height: 52px; flex-shrink: 0;
+    position: sticky; top: 0; z-index: 200;
+  }
+  .nav-logo { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-right: auto; }
+  .nav-prog-text { font-size: 11px; color: var(--text2); white-space: nowrap; }
+  .progress-bar { width: 80px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s; }
+  .menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+
+  /* ── LAYOUT ── */
+  .app { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR (desktop) ── */
+  aside {
+    width: 220px; flex-shrink: 0;
+    background: var(--surface); border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 12px 0;
+  }
+  .sidebar-section { padding: 8px 14px 4px; font-size: 10px; font-weight: 700; color: var(--text2); letter-spacing: 0.12em; text-transform: uppercase; }
+  .topic-btn {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 8px 14px;
+    background: none; border: none; border-left: 2px solid transparent;
+    color: var(--text2); font-size: 12px; text-align: left; cursor: pointer; transition: all 0.15s;
+  }
   .topic-btn:hover { background: var(--surface2); color: var(--text); }
   .topic-btn.active { color: var(--accent); border-left-color: var(--accent); background: var(--surface2); }
   .topic-btn.completed { color: var(--success); }
   .topic-btn .status { margin-left: auto; font-size: 11px; }
-  .content { flex: 1; overflow-y: auto; padding: 32px; display: flex; flex-direction: column; gap: 24px; }
-  .home { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 24px; text-align: center; }
-  .home h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; }
+
+  /* ── CONTENT ── */
+  .content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; -webkit-overflow-scrolling: touch; }
+
+  /* ── HOME ── */
+  .home { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 20px; text-align: center; padding: 20px; }
+  .home h1 { font-size: clamp(24px, 6vw, 36px); font-weight: 800; }
   .home h1 span { color: var(--accent); }
-  .home p { color: var(--text2); font-size: 16px; max-width: 500px; line-height: 1.6; }
-  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 500px; }
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .stat-card .num { font-size: 32px; font-weight: 800; color: var(--accent); }
-  .stat-card .label { font-size: 12px; color: var(--text2); margin-top: 4px; }
-  .quiz-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-  .topic-tag { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
-  .quiz-title { font-size: 24px; font-weight: 700; line-height: 1.3; }
-  .quiz-desc { color: var(--text2); font-size: 14px; margin-top: 8px; line-height: 1.5; }
-  .reset-btn { padding: 8px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 13px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
-  .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .drag-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
-  .drag-section h3 { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
-  .items-bank { display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; }
-  .drag-item { padding: 8px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; cursor: grab; transition: all 0.15s; user-select: none; white-space: nowrap; }
+  .home p { color: var(--text2); font-size: clamp(13px, 3vw, 15px); max-width: 420px; line-height: 1.6; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; width: 100%; max-width: 420px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 8px; }
+  .stat-card .num { font-size: clamp(22px, 6vw, 32px); font-weight: 800; color: var(--accent); }
+  .stat-card .label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* ── QUIZ HEADER ── */
+  .quiz-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .topic-tag { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .quiz-title { font-size: clamp(18px, 4vw, 24px); font-weight: 700; line-height: 1.3; }
+  .quiz-desc { color: var(--text2); font-size: 13px; margin-top: 6px; line-height: 1.5; }
+  .reset-btn { padding: 7px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-size: 12px; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+  .reset-btn:hover, .reset-btn:active { border-color: var(--accent); color: var(--accent); }
+
+  /* ── DRAG SECTION ── */
+  .drag-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .drag-section h3 { font-size: 10px; font-weight: 700; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+
+  /* ── ITEMS BANK ── */
+  .items-bank { display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; }
+
+  /* DESKTOP drag items */
+  .drag-item {
+    padding: 7px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 12px; cursor: grab; transition: all 0.15s;
+    user-select: none; touch-action: none;
+  }
   .drag-item:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
   .drag-item.dragging { opacity: 0.4; cursor: grabbing; }
-  .drag-item.correct { background: rgba(78,204,163,0.1); border-color: var(--success); color: var(--success); cursor: default; }
-  .drag-item.incorrect { background: rgba(255,107,107,0.1); border-color: var(--fail); color: var(--fail); animation: shake 0.3s ease; }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
-  .drop-zones { display: grid; gap: 16px; }
-  .drop-zone-wrapper { display: flex; flex-direction: column; gap: 8px; }
-  .drop-zone-label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .drag-item.correct { background: rgba(78,204,163,0.12); border-color: var(--success); color: var(--success); cursor: default; }
+  .drag-item.incorrect { background: rgba(255,107,107,0.12); border-color: var(--fail); color: var(--fail); animation: shake 0.3s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+  /* ── DROP ZONES ── */
+  .drop-zones { display: grid; gap: 12px; }
+  .drop-zone-wrapper { display: flex; flex-direction: column; gap: 6px; }
+  .drop-zone-label { font-size: 12px; font-weight: 600; color: var(--text); }
   .drop-zone-label .hint { font-size: 11px; color: var(--text2); font-weight: 400; }
-  .drop-zone { min-height: 52px; border: 1.5px dashed var(--border); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; transition: all 0.15s; background: var(--surface2); }
-  .drop-zone.drag-over { border-color: var(--accent); background: rgba(108,123,255,0.05); }
-  .drop-zone-placeholder { font-size: 12px; color: var(--text2); opacity: 0.6; pointer-events: none; }
+  .drop-zone {
+    min-height: 48px; border: 1.5px dashed var(--border); border-radius: 10px;
+    padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    transition: all 0.15s; background: var(--surface2);
+  }
+  .drop-zone.drag-over { border-color: var(--accent); background: rgba(108,123,255,0.06); }
+  .drop-zone-placeholder { font-size: 11px; color: var(--text2); opacity: 0.5; pointer-events: none; }
 
-  /* GLOSSARY SECTION */
-  .glossary-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-  .glossary-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; cursor: pointer; user-select: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
-  .glossary-header:hover { border-bottom-color: var(--border); }
-  .glossary-header h3 { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; }
-  .glossary-toggle { font-size: 12px; color: var(--text2); }
-  .glossary-body { display: none; padding: 0 24px 20px; }
+  /* ── MOBILE TAP MODE ── */
+  .tap-item {
+    padding: 10px 16px; background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 13px; cursor: pointer; transition: all 0.15s;
+    user-select: none; text-align: center; width: 100%;
+  }
+  .tap-item.selected { border-color: var(--accent); background: rgba(108,123,255,0.12); color: var(--accent); }
+  .tap-item.correct { border-color: var(--success); background: rgba(78,204,163,0.12); color: var(--success); }
+  .tap-item.incorrect { border-color: var(--fail); background: rgba(255,107,107,0.12); color: var(--fail); animation: shake 0.3s ease; }
+  .tap-item.placed { border-color: var(--border); background: var(--surface2); color: var(--text2); opacity: 0.5; pointer-events: none; }
+
+  .tap-zone {
+    min-height: 44px; border: 1.5px dashed var(--border); border-radius: 10px;
+    padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    background: var(--surface2); cursor: pointer; transition: all 0.15s;
+  }
+  .tap-zone.highlight { border-color: var(--accent2); background: rgba(78,204,163,0.06); }
+  .tap-zone.correct-zone { border-color: var(--success); border-style: solid; }
+
+  .tap-placed-item {
+    padding: 5px 10px; border-radius: 6px; font-size: 12px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    cursor: pointer;
+  }
+  .tap-placed-item.correct { background: rgba(78,204,163,0.1); border-color: var(--success); color: var(--success); cursor: default; }
+  .tap-placed-item.incorrect { background: rgba(255,107,107,0.1); border-color: var(--fail); color: var(--fail); }
+
+  /* ── GLOSSARY ── */
+  .glossary-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .glossary-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; user-select: none; }
+  .glossary-header h3 { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; }
+  .glossary-toggle { font-size: 11px; color: var(--text2); }
+  .glossary-body { display: none; padding: 0 16px 16px; }
   .glossary-body.open { display: block; }
-  .glossary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; margin-top: 16px; }
-  .glossary-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
-  .glossary-term { font-size: 13px; font-weight: 600; color: var(--accent2); margin-bottom: 4px; }
-  .glossary-def { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .glossary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; margin-top: 12px; }
+  .glossary-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .glossary-term { font-size: 12px; font-weight: 600; color: var(--accent2); margin-bottom: 3px; }
+  .glossary-def { font-size: 11px; color: var(--text2); line-height: 1.5; }
 
-  .feedback { display: none; padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+  /* ── FEEDBACK ── */
+  .feedback { display: none; padding: 14px 16px; border-radius: 12px; font-size: 13px; line-height: 1.5; }
   .feedback.show { display: block; }
   .feedback.success { background: rgba(78,204,163,0.1); border: 1px solid var(--success); color: var(--success); }
-  .feedback.partial { background: rgba(255,200,100,0.1); border: 1px solid #ffc864; color: #ffc864; }
+  .feedback.partial { background: rgba(255,200,100,0.1); border: 1px solid var(--warn); color: var(--warn); }
   .feedback.error { background: rgba(255,107,107,0.1); border: 1px solid var(--fail); color: var(--fail); }
-  .check-btn { padding: 12px 28px; background: linear-gradient(135deg, var(--accent), #8b97ff); border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; align-self: flex-start; }
-  .check-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(108,123,255,0.3); }
-  .next-btn { padding: 12px 28px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: none; }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .check-btn { padding: 12px 24px; background: linear-gradient(135deg, var(--accent), #8b97ff); border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .check-btn:active { transform: scale(0.97); }
+  .next-btn { padding: 12px 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; display: none; }
   .next-btn.show { display: block; }
-  .next-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-  .btn-row { display: flex; gap: 12px; align-items: center; }
-  .score-badge { display: none; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+  .next-btn:active { border-color: var(--accent2); color: var(--accent2); }
+  .score-badge { display: none; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
   .score-badge.show { display: inline-block; }
   .score-badge.perfect { background: rgba(78,204,163,0.15); color: var(--success); }
   .score-badge.good { background: rgba(108,123,255,0.15); color: var(--accent); }
   .score-badge.retry { background: rgba(255,107,107,0.15); color: var(--fail); }
-  ::-webkit-scrollbar { width: 6px; }
+
+  /* ── MOBILE DRAWER ── */
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; }
+  .drawer-overlay.open { display: block; }
+  .drawer {
+    position: fixed; top: 0; left: -280px; bottom: 0; width: 280px;
+    background: var(--surface); border-right: 1px solid var(--border);
+    overflow-y: auto; z-index: 400; transition: left 0.25s ease; padding: 52px 0 20px;
+  }
+  .drawer.open { left: 0; }
+
+  /* ── MOBILE BOTTOM NAV ── */
+  .bottom-nav { display: none; }
+
+  /* ── INSTRUCTION HINT (mobile) ── */
+  .tap-hint { display: none; font-size: 11px; color: var(--text2); text-align: center; padding: 6px; background: var(--surface2); border-radius: 8px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ══════════════════════════════
+     MOBILE STYLES (≤ 768px)
+  ══════════════════════════════ */
+  @media (max-width: 768px) {
+    html, body { overflow: hidden; height: 100%; height: 100dvh; }
+    nav { padding: 0 12px; height: 48px; }
+    .menu-btn { display: block; }
+    .progress-bar { width: 60px; }
+    aside { display: none; }
+    .content { padding: 14px; gap: 12px; }
+    .tap-hint { display: block; }
+    .drag-section { padding: 12px; }
+    .drag-section h3 { margin-bottom: 10px; }
+    .items-bank { gap: 6px; }
+    .drop-zones { grid-template-columns: 1fr !important; }
+    .glossary-grid { grid-template-columns: 1fr; }
+    .quiz-title { font-size: 17px; }
+    .quiz-desc { font-size: 12px; }
+    .btn-row { gap: 8px; }
+    .check-btn, .next-btn { padding: 12px 20px; font-size: 13px; flex: 1; text-align: center; }
+  }
 </style>
 </head>
 <body>
+
 <nav>
-  <div class="nav-logo">⚡ SysDesign Quiz</div>
-  <span class="nav-progress" id="progressText">0 / 33 completed</span>
+  <button class="menu-btn" onclick="toggleDrawer()" aria-label="Menu">☰</button>
+  <div class="nav-logo">⚡ SysDesign</div>
+  <span class="nav-prog-text" id="progressText">0/33</span>
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
 </nav>
-<main>
+
+<!-- Mobile drawer overlay -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div id="drawerSidebar"></div>
+</div>
+
+<div class="app">
   <aside id="sidebar"></aside>
   <div class="content" id="content"></div>
-</main>
+</div>
+
 <script>
+// ── TOPICS DATA ──
 const topics = [
   {
     id: 'sql-nosql', category: 'System Design', title: 'SQL vs NoSQL',
-    desc: 'Drag each characteristic to the correct database type.',
+    desc: 'Match each characteristic to the correct database type.',
     zones: [
       { id: 'sql', label: 'SQL (Relational)', hint: 'e.g. PostgreSQL, MySQL' },
       { id: 'nosql', label: 'NoSQL (Non-relational)', hint: 'e.g. MongoDB, Cosmos DB' }
     ],
     items: [
       { text: 'Tables with rows and columns', zone: 'sql', def: 'SQL stores data in structured tables where every row has the same columns.' },
-      { text: 'Primary and foreign keys', zone: 'sql', def: 'Keys are how SQL tables relate to each other — a foreign key in orders points to a primary key in users.' },
+      { text: 'Primary and foreign keys', zone: 'sql', def: 'Keys relate tables to each other — a foreign key in orders points to a primary key in users.' },
       { text: 'Strict schema enforced', zone: 'sql', def: 'Every row must match the defined columns — you cant add extra fields on the fly.' },
       { text: 'Great for complex joins', zone: 'sql', def: 'SQL can combine data from multiple tables in one query using JOIN operations.' },
       { text: 'Scales vertically by default', zone: 'sql', def: 'SQL databases typically grow by adding more power to one machine rather than adding more machines.' },
@@ -129,28 +257,28 @@ const topics = [
       { text: 'Flexible schema', zone: 'nosql', def: 'Two documents in the same container can have completely different fields — no rigid structure enforced.' },
       { text: 'Scales horizontally easily', zone: 'nosql', def: 'NoSQL is designed to spread data across many machines without cross-machine joins slowing things down.' },
       { text: 'Great for high write throughput', zone: 'nosql', def: 'NoSQL databases can handle millions of writes per second — ideal for IoT telemetry or social feeds.' },
-      { text: 'Eventual consistency common', zone: 'nosql', def: 'Data might not be perfectly in sync across all nodes instantly — it gets there eventually.' },
-      { text: 'Each document can have different fields', zone: 'nosql', def: 'One device document might have temperature and humidity, another only battery — both valid in NoSQL.' },
+      { text: 'Eventual consistency common', zone: 'nosql', def: 'Data might not be in sync across all nodes instantly — it gets there eventually.' },
+      { text: 'Each document can have different fields', zone: 'nosql', def: 'One device document might have temperature and humidity, another only battery — both valid.' },
     ]
   },
   {
     id: 'url-flow', category: 'System Design', title: 'URL Request Flow',
-    desc: 'Put these steps in the correct order by dragging them into the sequence zones.',
+    desc: 'Put these steps in the correct order.',
     zones: [
-      { id: 's1', label: 'Step 1', hint: 'First thing the browser does' },
-      { id: 's2', label: 'Step 2', hint: 'If no IP cached' },
-      { id: 's3', label: 'Step 3', hint: 'Establish connection' },
-      { id: 's4', label: 'Step 4', hint: 'Secure the connection (HTTPS)' },
-      { id: 's5', label: 'Step 5', hint: 'Send the request' },
-      { id: 's6', label: 'Step 6', hint: 'Get the response' },
+      { id: 's1', label: 'Step 1 — first thing browser does' },
+      { id: 's2', label: 'Step 2 — if no IP cached' },
+      { id: 's3', label: 'Step 3 — establish connection' },
+      { id: 's4', label: 'Step 4 — secure connection (HTTPS)' },
+      { id: 's5', label: 'Step 5 — send the request' },
+      { id: 's6', label: 'Step 6 — get the response' },
     ],
     items: [
-      { text: 'Check browser / OS / router cache for IP', zone: 's1', def: 'Before hitting DNS, the browser checks local caches — browser, then OS, then router — to see if it already knows the IP.' },
-      { text: 'DNS lookup — resolve domain to IP', zone: 's2', def: 'DNS is the phonebook of the internet — it translates google.com into an IP address like 142.250.80.46.' },
-      { text: 'TCP handshake — SYN, SYN-ACK, ACK', zone: 's3', def: 'Three messages exchanged between browser and server to agree to open a connection before any data is sent.' },
-      { text: 'TLS handshake — negotiate encryption', zone: 's4', def: 'For HTTPS, an additional handshake that agrees on encryption so all data sent is secure.' },
-      { text: 'Browser sends HTTP GET request', zone: 's5', def: 'The actual request goes through the secure tunnel — includes method, headers, and optionally a body.' },
-      { text: 'Server responds — browser renders page', zone: 's6', def: 'Server sends back HTML/CSS/JS in packets that the browser reassembles and renders into what you see.' },
+      { text: 'Check browser / OS / router cache for IP', zone: 's1', def: 'Before hitting DNS, the browser checks local caches to see if it already knows the IP.' },
+      { text: 'DNS lookup — resolve domain to IP', zone: 's2', def: 'DNS is the phonebook of the internet — translates google.com into an IP address.' },
+      { text: 'TCP handshake — SYN, SYN-ACK, ACK', zone: 's3', def: 'Three messages exchanged to agree to open a connection before any data is sent.' },
+      { text: 'TLS handshake — negotiate encryption', zone: 's4', def: 'For HTTPS, an additional handshake agrees on encryption so all data is secure.' },
+      { text: 'Browser sends HTTP GET request', zone: 's5', def: 'The actual request goes through the secure tunnel — method, headers, optionally a body.' },
+      { text: 'Server responds — browser renders page', zone: 's6', def: 'Server sends back HTML/CSS/JS in packets the browser reassembles and renders.' },
     ]
   },
   {
@@ -160,17 +288,17 @@ const topics = [
       { id: 'what', label: 'What caching does' },
       { id: 'hit-miss', label: 'Cache hit vs miss' },
       { id: 'strategies', label: 'Cache strategies' },
-      { id: 'tools', label: 'Cache tools / examples' },
+      { id: 'tools', label: 'Tools / examples' },
     ],
     items: [
-      { text: 'Stores frequently accessed data for fast retrieval', zone: 'what', def: 'A cache holds data in fast memory so future requests get it instantly without hitting a slower database.' },
-      { text: 'Avoids repeated expensive DB queries', zone: 'what', def: 'If 10,000 users request the same product page, the cache serves it from memory instead of running 10,000 DB queries.' },
+      { text: 'Stores frequently accessed data for fast retrieval', zone: 'what', def: 'A cache holds data in fast memory so future requests get it instantly without hitting a slower DB.' },
+      { text: 'Avoids repeated expensive DB queries', zone: 'what', def: 'If 10k users request the same page, the cache serves it from memory instead of running 10k DB queries.' },
       { text: 'Cache hit — data found, return immediately', zone: 'hit-miss', def: 'The data was in the cache — response is instant, no database call needed.' },
-      { text: 'Cache miss — fetch from DB, store in cache', zone: 'hit-miss', def: 'Data wasnt cached — go to the DB, get it, store it in cache so next time is fast.' },
+      { text: 'Cache miss — fetch from DB, store in cache', zone: 'hit-miss', def: 'Data wasnt cached — go to the DB, get it, store it so next time is fast.' },
       { text: 'TTL — data expires after set time', zone: 'strategies', def: 'Time To Live — cached data auto-deletes after X seconds, forcing a fresh fetch next time.' },
       { text: 'Active invalidation — delete on data change', zone: 'strategies', def: 'When underlying data changes, immediately delete the cache entry so stale data isnt served.' },
       { text: 'LRU eviction — remove least recently used', zone: 'strategies', def: 'When cache is full, kick out the data that hasnt been accessed in the longest time.' },
-      { text: 'Redis — external in-memory cache', zone: 'tools', def: 'A standalone caching service that lives outside your app — fast, supports TTL, used by most production systems.' },
+      { text: 'Redis — external in-memory cache', zone: 'tools', def: 'A standalone caching service — fast, supports TTL, used by most production systems.' },
       { text: 'In-memory cache — lives inside the app', zone: 'tools', def: 'Cache stored in the apps own memory — fastest possible but lost if the app restarts.' },
     ]
   },
@@ -191,8 +319,8 @@ const topics = [
       { text: 'Reacts to events independently', zone: 'consumer', def: 'Each consumer operates on its own — one consumer failing doesnt stop others from processing.' },
       { text: 'Holds messages in FIFO order', zone: 'queue', def: 'First In First Out — messages are processed in the order they were received.' },
       { text: 'Kafka, Azure Service Bus', zone: 'queue', def: 'Popular message broker systems — Kafka is used in your current IoT work.' },
-      { text: 'Where failed messages land for retry', zone: 'dlq', def: 'If a consumer fails to process a message after X retries, it goes to the DLQ so nothing is lost.' },
-      { text: 'Prevents message loss on consumer failure', zone: 'dlq', def: 'DLQ acts as a safety net — failed messages wait there until someone investigates and reprocesses them.' },
+      { text: 'Where failed messages land for retry', zone: 'dlq', def: 'If a consumer fails after X retries, the message goes to the DLQ so nothing is lost.' },
+      { text: 'Prevents message loss on consumer failure', zone: 'dlq', def: 'DLQ acts as a safety net — failed messages wait there until someone reprocesses them.' },
       { text: 'Decouples services from each other', zone: 'benefits', def: 'Services dont need to know about each other — they just publish and consume events independently.' },
       { text: 'Async — producer doesnt wait', zone: 'benefits', def: 'The producer fires a message and immediately moves on without waiting for consumers to finish.' },
       { text: 'Resilient — messages survive downtime', zone: 'benefits', def: 'If a consumer goes down, messages queue up and get processed when it comes back online.' },
@@ -206,9 +334,9 @@ const topics = [
       { id: 'horizontal', label: 'Horizontal Scaling (Scale Out)' },
     ],
     items: [
-      { text: 'Add more CPU and RAM to one machine', zone: 'vertical', def: 'Vertical scaling makes a single server more powerful — bigger CPU, more memory, faster disk.' },
+      { text: 'Add more CPU and RAM to one machine', zone: 'vertical', def: 'Vertical scaling makes a single server more powerful — bigger CPU, more memory.' },
       { text: 'Simple — no load balancer needed', zone: 'vertical', def: 'One machine means no traffic distribution complexity — just a bigger box.' },
-      { text: 'Hard physical ceiling', zone: 'vertical', def: 'There is a maximum amount of CPU and RAM you can fit in one machine — you will eventually hit it.' },
+      { text: 'Hard physical ceiling', zone: 'vertical', def: 'There is a maximum amount of CPU and RAM you can fit in one machine — you will hit it.' },
       { text: 'Single point of failure', zone: 'vertical', def: 'If that one powerful machine goes down, everything goes down with it.' },
       { text: 'Gets expensive fast', zone: 'vertical', def: 'High-end server hardware costs increase exponentially — doubling power more than doubles cost.' },
       { text: 'Add more machines', zone: 'horizontal', def: 'Horizontal scaling adds more servers — 1 becomes 5 becomes 50, each handling a share of traffic.' },
@@ -216,7 +344,7 @@ const topics = [
       { text: 'Needs a load balancer', zone: 'horizontal', def: 'With multiple machines you need something to distribute incoming traffic evenly across them.' },
       { text: 'No single point of failure', zone: 'horizontal', def: 'If one server goes down the others keep serving traffic — much more resilient.' },
       { text: 'App must be stateless', zone: 'horizontal', def: 'Any server must be able to handle any request — session data cant live on one specific machine.' },
-      { text: 'Preferred by large scale systems', zone: 'horizontal', def: 'Twitter, Netflix, and Amazon all use horizontal scaling — its how internet-scale is achieved.' },
+      { text: 'Preferred by large scale systems', zone: 'horizontal', def: 'Twitter, Netflix, Amazon all use horizontal scaling — its how internet-scale is achieved.' },
     ]
   },
   {
@@ -233,8 +361,8 @@ const topics = [
       { text: 'Eliminates single point of failure at app layer', zone: 'what', def: 'If any one server dies, the LB routes around it and other servers absorb the load.' },
       { text: 'Round robin — rotate evenly 1,2,3,1,2,3', zone: 'strategies', def: 'Each request goes to the next server in sequence — simple and even distribution.' },
       { text: 'Least connections — route to least busy', zone: 'strategies', def: 'Send each new request to whichever server currently has the fewest active connections.' },
-      { text: 'IP hashing — same user hits same server', zone: 'strategies', def: 'Hash the users IP address to always route them to the same server — useful for session consistency.' },
-      { text: 'Active-passive failover — backup LB on standby', zone: 'ha', def: 'Two load balancers run — one active, one passive. If the active fails the passive takes over automatically.' },
+      { text: 'IP hashing — same user hits same server', zone: 'strategies', def: 'Hash the users IP to always route them to the same server — useful for session consistency.' },
+      { text: 'Active-passive failover — backup LB on standby', zone: 'ha', def: 'Two load balancers — one active, one passive. If active fails the passive takes over automatically.' },
       { text: 'Heartbeat checks detect downed servers', zone: 'ha', def: 'The LB pings each server periodically — no response means it removes that server from rotation.' },
     ]
   },
@@ -247,7 +375,7 @@ const topics = [
     ],
     items: [
       { text: 'User login — check password before proceeding', zone: 'sync', def: 'Auth must succeed or fail before the app knows what to do next — it has to wait.' },
-      { text: 'Payment processing — must succeed before confirming order', zone: 'sync', def: 'You cannot confirm an order until you know the payment went through — synchronous by necessity.' },
+      { text: 'Payment must succeed before confirming order', zone: 'sync', def: 'You cannot confirm an order until you know the payment went through — synchronous by necessity.' },
       { text: 'Fetching user profile to display on screen', zone: 'sync', def: 'The page cant render without the data — the request must complete before the UI can update.' },
       { text: 'Auth check — cant proceed without yes or no', zone: 'sync', def: 'Everything downstream depends on knowing if the user is authenticated — you have to wait.' },
       { text: 'Sending a welcome email after signup', zone: 'async', def: 'The user doesnt need to wait for an email to send — fire it off in the background via a queue.' },
@@ -258,8 +386,8 @@ const topics = [
     ]
   },
   {
-    id: 'auth', category: 'System Design', title: 'Authentication vs Authorization',
-    desc: 'Match each concept to authentication or authorization.',
+    id: 'auth', category: 'System Design', title: 'Auth vs Authorization',
+    desc: 'Match each concept to the correct category.',
     zones: [
       { id: 'authn', label: 'Authentication — who are you?' },
       { id: 'authz', label: 'Authorization — what can you do?' },
@@ -267,16 +395,16 @@ const topics = [
     ],
     items: [
       { text: 'Verifying username and password', zone: 'authn', def: 'The first step — confirming the user is who they claim to be before doing anything else.' },
-      { text: 'Checking credentials against the database', zone: 'authn', def: 'The server compares what the user sent against what is stored — if they match, authentication succeeds.' },
-      { text: 'Passwords are hashed not encrypted (bcrypt)', zone: 'authn', def: 'Hashing is one-way — you cant reverse it. The server hashes your input and compares hashes, never storing the plain password.' },
+      { text: 'Checking credentials against the database', zone: 'authn', def: 'The server compares what the user sent against what is stored — if they match, auth succeeds.' },
+      { text: 'Passwords are hashed not encrypted (bcrypt)', zone: 'authn', def: 'Hashing is one-way — you cant reverse it. Server hashes your input and compares hashes.' },
       { text: 'Issuing a JWT token on successful login', zone: 'authn', def: 'After confirming identity, the server creates a signed token the client sends with every future request.' },
-      { text: 'Checking if user has admin role', zone: 'authz', def: 'Authorization happens after authentication — now we know who you are, we check what you are allowed to do.' },
+      { text: 'Checking if user has admin role', zone: 'authz', def: 'Authorization happens after authentication — now we know who you are, we check what you can do.' },
       { text: 'RBAC — role based access control', zone: 'authz', def: 'Users belong to roles (admin, editor, viewer) and each role has defined permissions.' },
       { text: 'Validating token scopes — user:read, user:write', zone: 'authz', def: 'Scopes in the JWT define exactly which operations the token grants permission to perform.' },
       { text: 'Checking claims in the JWT payload', zone: 'authz', def: 'The payload of a JWT contains claims — who the user is, their role, what they can access.' },
-      { text: 'Header.Payload.Signature — three parts', zone: 'jwt', def: 'A JWT is three base64-encoded sections separated by dots — algorithm, claims data, and cryptographic signature.' },
+      { text: 'Header.Payload.Signature — three parts', zone: 'jwt', def: 'A JWT is three base64-encoded sections separated by dots — algorithm, claims data, signature.' },
       { text: 'Short lived access token — 15 mins', zone: 'jwt', def: 'Access tokens expire quickly to limit damage if stolen — 15 minutes is common.' },
-      { text: 'Refresh token — used to get new JWT', zone: 'jwt', def: 'A longer-lived token used only to request a new access token when the old one expires — user stays logged in.' },
+      { text: 'Refresh token — used to get new JWT', zone: 'jwt', def: 'A longer-lived token used only to request a new access token when the old one expires.' },
       { text: 'Sent as Bearer token in Authorization header', zone: 'jwt', def: 'Every API request includes Authorization: Bearer <token> so the server can validate who is calling.' },
     ]
   },
@@ -289,16 +417,16 @@ const topics = [
     ],
     items: [
       { text: 'Everything in one codebase and deployment', zone: 'mono', def: 'Auth, orders, payments, notifications — all in one app deployed as a single unit.' },
-      { text: 'Simple to develop and debug early on', zone: 'mono', def: 'One codebase is easy to search, trace, and understand — no network calls between services to follow.' },
+      { text: 'Simple to develop and debug early on', zone: 'mono', def: 'One codebase is easy to search, trace, and understand — no network calls between services.' },
       { text: 'One bug can take down everything', zone: 'mono', def: 'A crash in the payment module takes down your auth and orders too — no isolation.' },
-      { text: 'Hard to scale individual parts', zone: 'mono', def: 'If only your order service is under load, you still have to scale the whole app to handle it.' },
+      { text: 'Hard to scale individual parts', zone: 'mono', def: 'If only your order service is under load, you still have to scale the whole app.' },
       { text: 'Good for small teams starting out', zone: 'mono', def: 'Microservices add operational complexity a small team doesnt need — start simple.' },
       { text: 'Independent deployable services', zone: 'micro', def: 'Each service is its own app — deployed, scaled, and updated independently of others.' },
       { text: 'Each service scales independently', zone: 'micro', def: 'Scale just the order service during a sale — no need to scale everything.' },
       { text: 'One service down doesnt break others', zone: 'micro', def: 'If the email service crashes, orders and payments keep running — failures are isolated.' },
       { text: 'Complex to manage and debug', zone: 'micro', def: 'Tracing a request across 10 services is hard — you need good observability tools.' },
       { text: 'Each service can have its own database', zone: 'micro', def: 'Services are truly independent — they dont share a database, reducing coupling even further.' },
-      { text: 'Risk of premature optimization', zone: 'micro', def: 'Starting with microservices before you understand your system adds complexity you may not need yet.' },
+      { text: 'Risk of premature optimization', zone: 'micro', def: 'Starting with microservices before you understand your system adds complexity you may not need.' },
     ]
   },
   {
@@ -313,14 +441,14 @@ const topics = [
     ],
     items: [
       { text: 'Every read returns the most recent write', zone: 'c', def: 'Consistency means all nodes in the system see the same data at the same time.' },
-      { text: 'Every request gets a response always', zone: 'a', def: 'Availability means the system is always up and responding — even if the data might be slightly stale.' },
-      { text: 'System works even if nodes lose communication', zone: 'p', def: 'Partition tolerance means the system keeps functioning even when network partitions occur between nodes.' },
+      { text: 'Every request gets a response always', zone: 'a', def: 'Availability means the system is always up and responding — even if data might be slightly stale.' },
+      { text: 'System works even if nodes lose communication', zone: 'p', def: 'Partition tolerance means the system keeps functioning even when network partitions occur.' },
       { text: 'Unavoidable in distributed systems', zone: 'p', def: 'Networks fail — partitions happen. P is not optional in any real distributed system.' },
-      { text: 'Banking — rather error than wrong balance', zone: 'cp', def: 'A bank prefers to show an error than show you an incorrect account balance — accuracy over uptime.' },
+      { text: 'Banking — rather error than wrong balance', zone: 'cp', def: 'A bank prefers to show an error than show you an incorrect account balance.' },
       { text: 'Stock trading — accuracy critical', zone: 'cp', def: 'Stale stock prices could cost users money — consistency is non-negotiable.' },
       { text: 'Twitter feed — stale data acceptable', zone: 'ap', def: 'Seeing a tweet a few seconds late is fine — Twitter favors staying up over perfect consistency.' },
       { text: 'IoT telemetry — uptime over perfect accuracy', zone: 'ap', def: 'A sensor reading thats 100ms delayed is fine — the system staying available matters more.' },
-      { text: 'Eventual consistency — data catches up over time', zone: 'ap', def: 'AP systems accept that data will be consistent eventually — just not necessarily right this instant.' },
+      { text: 'Eventual consistency — data catches up over time', zone: 'ap', def: 'AP systems accept that data will be consistent eventually — just not necessarily right now.' },
     ]
   },
   {
@@ -334,16 +462,16 @@ const topics = [
     ],
     items: [
       { text: 'Separate data structure for fast lookups', zone: 'what', def: 'An index is a sorted data structure the database maintains alongside the table for fast searching.' },
-      { text: 'Like a textbook index — jump straight to the page', zone: 'what', def: 'Instead of reading every page of a book, you look at the index and jump to the exact page you need.' },
-      { text: 'Avoids full table scan', zone: 'read', def: 'Without an index, every row is checked one by one — with an index you jump directly to matches.' },
+      { text: 'Like a textbook index — jump to the right page', zone: 'what', def: 'Instead of reading every page, you look at the index and jump to the exact page you need.' },
+      { text: 'Avoids full table scan', zone: 'read', def: 'Without an index every row is checked one by one — with an index you jump directly to matches.' },
       { text: 'Jump directly to matching rows', zone: 'read', def: 'The index stores pointers to rows — the database goes straight there without scanning everything.' },
       { text: 'Significantly faster queries', zone: 'read', def: 'Indexed queries can be orders of magnitude faster — from seconds to milliseconds at scale.' },
-      { text: 'Every write must update all indexes', zone: 'write', def: 'Each INSERT, UPDATE, or DELETE triggers an update to every index on that table — more indexes means slower writes.' },
+      { text: 'Every write must update all indexes', zone: 'write', def: 'Each INSERT, UPDATE, or DELETE triggers an update to every index — more indexes means slower writes.' },
       { text: 'Too many indexes slow down inserts and updates', zone: 'write', def: 'If you have 10 indexes, one write operation triggers 10 index updates — expensive at scale.' },
       { text: 'Uses extra disk space and memory', zone: 'write', def: 'Each index is a separate data structure stored on disk and loaded into memory — it has a real cost.' },
       { text: 'Columns you frequently filter or sort by', zone: 'when', def: 'Index WHERE clause columns — things you search by like user_id, email, or status.' },
       { text: 'user_id, email, created_at — good candidates', zone: 'when', def: 'These are queried constantly in most apps — indexing them gives huge read performance gains.' },
-      { text: 'Rarely queried columns — not worth it', zone: 'when', def: 'Indexing a bio field nobody searches by adds write cost with no read benefit.' },
+      { text: 'Rarely queried columns — not worth it', zone: 'when', def: 'Indexing a bio field nobody searches by adds write cost with zero read benefit.' },
     ]
   },
   {
@@ -357,18 +485,18 @@ const topics = [
     items: [
       { text: 'Prevents one client from spamming your API', zone: 'what', def: 'Rate limiting caps how many requests a single user or IP can make in a time window.' },
       { text: 'Protects system from abuse and overload', zone: 'what', def: 'Without rate limiting one bad actor can bring down your API for everyone else.' },
-      { text: 'Solves the noisy neighbor problem', zone: 'what', def: 'Noisy neighbor = one tenant using so much resource it degrades the experience for all others.' },
-      { text: 'Redis tracks request count per user with TTL', zone: 'how', def: 'Each request increments a Redis counter keyed by user ID — the counter resets when its TTL expires.' },
+      { text: 'Solves the noisy neighbor problem', zone: 'what', def: 'Noisy neighbor = one tenant using so much resource it degrades experience for all others.' },
+      { text: 'Redis tracks request count per user with TTL', zone: 'how', def: 'Each request increments a Redis counter keyed by user ID — counter resets when TTL expires.' },
       { text: 'Returns 429 Too Many Requests when over limit', zone: 'how', def: '429 is the HTTP status code that tells the client they have exceeded their allowed request rate.' },
-      { text: 'Counter resets every 60 seconds via TTL', zone: 'how', def: 'TTL on the Redis key means the count automatically clears after the time window — no manual cleanup.' },
-      { text: 'API gateway — first line of defense', zone: 'where', def: 'Implement at the gateway level so abusive requests are blocked before they reach your services.' },
+      { text: 'Counter resets every 60 seconds via TTL', zone: 'how', def: 'TTL on the Redis key means the count automatically clears after the time window.' },
+      { text: 'API gateway — first line of defense', zone: 'where', def: 'Implement at the gateway level so abusive requests are blocked before reaching your services.' },
       { text: 'Service level — per endpoint limits', zone: 'where', def: 'Different endpoints can have different limits — a search endpoint might be stricter than a profile fetch.' },
       { text: 'Both layers — most production systems', zone: 'where', def: 'Gateway for broad protection, service level for granular per-endpoint control — defense in depth.' },
     ]
   },
   {
     id: 'websockets', category: 'System Design', title: 'WebSockets vs Polling',
-    desc: 'Match each characteristic to the correct communication method.',
+    desc: 'Match each characteristic to the correct method.',
     zones: [
       { id: 'polling', label: 'Regular polling' },
       { id: 'long', label: 'Long polling' },
@@ -380,7 +508,7 @@ const topics = [
       { text: 'Most wasteful — mostly empty responses', zone: 'polling', def: 'The majority of poll responses will be empty — wasted bandwidth and server load.' },
       { text: 'Good for updates every 30+ seconds', zone: 'polling', def: 'When real-time doesnt matter and data changes slowly, polling is simple and good enough.' },
       { text: 'Client connects, server holds until data ready', zone: 'long', def: 'Long polling keeps the connection open — the server only responds when it has something to send.' },
-      { text: 'Better than polling — less wasted requests', zone: 'long', def: 'No empty responses — each response contains actual data since the server waits for something to send.' },
+      { text: 'Better than polling — less wasted requests', zone: 'long', def: 'No empty responses — each response contains actual data since the server waits.' },
       { text: 'Good for notifications and alerts', zone: 'long', def: 'Near-real-time is fine for notifications — long polling is simpler than WebSockets for this.' },
       { text: 'Persistent two-way connection', zone: 'ws', def: 'A WebSocket connection stays open indefinitely — either side can send data at any time.' },
       { text: 'Either side can send data anytime', zone: 'ws', def: 'Unlike HTTP, the server can push data to the client without waiting for the client to ask.' },
@@ -397,16 +525,16 @@ const topics = [
       { id: 'tradeoffs', label: 'Tradeoffs and challenges' },
     ],
     items: [
-      { text: 'Horizontally split data across multiple databases', zone: 'what', def: 'Instead of one giant database, sharding splits data across multiple database machines — each holds a slice.' },
+      { text: 'Horizontally split data across multiple databases', zone: 'what', def: 'Instead of one giant database, sharding splits data across multiple machines — each holds a slice.' },
       { text: 'Each shard holds a subset of total data', zone: 'what', def: 'Shard 1 might hold users A-M, shard 2 users N-Z — together they hold everything.' },
       { text: 'Horizontal scaling for databases', zone: 'what', def: 'Sharding is the database equivalent of adding more app servers — scale out instead of up.' },
       { text: 'Range based — A-M on shard 1, N-Z on shard 2', zone: 'strategies', def: 'Split data by a value range — simple but can create hot spots if data isnt evenly distributed.' },
-      { text: 'Hash based — hash the key to pick shard', zone: 'strategies', def: 'Run the key through a hash function — result determines the shard. More even distribution than range.' },
-      { text: 'Geographic — US users shard 1, EU shard 2', zone: 'strategies', def: 'Split by geography — good for latency and data residency compliance (like GDPR).' },
-      { text: 'Cross shard queries are complex', zone: 'tradeoffs', def: 'If you need data from multiple shards, you have to query all of them and combine results in your app.' },
+      { text: 'Hash based — hash the key to pick shard', zone: 'strategies', def: 'Run the key through a hash function — result determines the shard. More even distribution.' },
+      { text: 'Geographic — US users shard 1, EU shard 2', zone: 'strategies', def: 'Split by geography — good for latency and data residency compliance like GDPR.' },
+      { text: 'Cross shard queries are complex', zone: 'tradeoffs', def: 'If you need data from multiple shards, you query all of them and combine results in your app.' },
       { text: 'Joins across shards nearly impossible at DB level', zone: 'tradeoffs', def: 'The database cant join data across different machines — your app server has to do it manually.' },
       { text: 'Rebalancing is painful as data grows', zone: 'tradeoffs', def: 'If one shard gets too large, redistributing data to a new shard is a complex and risky operation.' },
-      { text: 'App server must do joins manually', zone: 'tradeoffs', def: 'Query shard A, query shard B, combine results in code — more complexity moved to the application layer.' },
+      { text: 'App server must do joins manually', zone: 'tradeoffs', def: 'Query shard A, query shard B, combine results in code — more complexity in the application layer.' },
     ]
   },
   {
@@ -421,9 +549,9 @@ const topics = [
     items: [
       { text: 'All or nothing — no partial updates ever', zone: 'a', def: 'If any step in a transaction fails, the entire thing rolls back — no half-written state.' },
       { text: 'If one step fails the whole thing rolls back', zone: 'a', def: 'Deduct $500 from checking, fail to add to savings — both operations roll back automatically.' },
-      { text: 'DB goes from one valid state to another', zone: 'c', def: 'The total money across all accounts stays the same before and after a transfer — no money appears or vanishes.' },
+      { text: 'DB goes from one valid state to another', zone: 'c', def: 'The total money across all accounts stays the same before and after a transfer.' },
       { text: 'Money cannot appear or disappear', zone: 'c', def: 'Consistency enforces business rules — $500 leaving one account must arrive somewhere else.' },
-      { text: 'Concurrent transactions dont interfere', zone: 'i', def: 'Two transactions running at the same time behave as if they were running sequentially — no interference.' },
+      { text: 'Concurrent transactions dont interfere', zone: 'i', def: 'Two transactions running at the same time behave as if they were running sequentially.' },
       { text: 'Each transaction behaves as if its the only one', zone: 'i', def: 'Isolation prevents one transaction from seeing the partial changes of another mid-flight.' },
       { text: 'Committed data survives crashes', zone: 'd', def: 'Once a transaction is committed, it stays committed — even if the server crashes immediately after.' },
       { text: 'Written to disk before confirming success', zone: 'd', def: 'The database writes to a transaction log on disk before telling you it succeeded — crash-safe.' },
@@ -444,7 +572,6 @@ const topics = [
       { text: 'Databases not designed for large binary files', zone: 'why-not-db', def: 'Databases are optimized for structured queries — storing large binary data defeats their purpose.' },
       { text: 'Bloats database size rapidly', zone: 'why-not-db', def: 'A few thousand profile photos can balloon a database to hundreds of GB, slowing everything.' },
       { text: 'Slow reads — ties up DB connections', zone: 'why-not-db', def: 'Reading a 5MB image from a DB ties up a connection that could be serving thousands of queries.' },
-      { text: 'DB storage far more expensive', zone: 'why-not-db', def: 'Database storage costs orders of magnitude more per GB than purpose-built blob storage.' },
       { text: 'Azure Blob Storage — used in your current job', zone: 'examples', def: 'Microsofts blob storage service — containers hold files, files get a URL for access.' },
       { text: 'AWS S3 — most common in interviews', zone: 'examples', def: 'Amazon Simple Storage Service — the most widely used blob storage in the world.' },
       { text: 'Profile pictures, videos, firmware updates', zone: 'examples', def: 'Any large file that users upload or systems need to store long-term belongs in blob storage.' },
@@ -459,19 +586,19 @@ const topics = [
       { id: 'bad', label: 'NOT for CDN' },
     ],
     items: [
-      { text: 'Network of servers distributed globally', zone: 'what', def: 'A CDN is hundreds of servers placed around the world — not one server, a whole network of them.' },
-      { text: 'Serves content from servers close to the user', zone: 'what', def: 'A user in Tokyo gets content from a Tokyo edge server, not from your US origin server.' },
+      { text: 'Network of servers distributed globally', zone: 'what', def: 'A CDN is hundreds of servers placed around the world — not one server, a whole network.' },
+      { text: 'Serves content from servers close to the user', zone: 'what', def: 'A user in Tokyo gets content from a Tokyo edge server, not your US origin server.' },
       { text: 'Reduces latency by cutting physical distance', zone: 'what', def: 'Data travels at the speed of light — less distance means less latency, faster load times.' },
       { text: 'Images, videos, CSS, JavaScript files', zone: 'good', def: 'Static assets that are the same for every user are perfect CDN candidates.' },
       { text: 'Static files — same for every user', zone: 'good', def: 'The same product image looks the same for every visitor — cache it globally on the CDN.' },
       { text: 'Product photos, profile pictures', zone: 'good', def: 'Binary media files are large and read frequently — CDN dramatically speeds up delivery.' },
       { text: 'Personalized feeds and dashboards', zone: 'bad', def: 'Your feed is unique to you — it cant be cached on a CDN because nobody elses feed is the same.' },
-      { text: 'Dynamic API responses', zone: 'bad', def: 'API responses that change per user, per request, or per second cant be meaningfully cached globally.' },
+      { text: 'Dynamic API responses', zone: 'bad', def: 'API responses that change per user or per request cant be meaningfully cached globally.' },
       { text: 'User account data and balances', zone: 'bad', def: 'Sensitive, personalized, frequently-changing data must come from origin servers — never CDN.' },
     ]
   },
   {
-    id: 'partitions', category: 'System Design', title: 'Message Queue Partitions',
+    id: 'partitions', category: 'System Design', title: 'Kafka Partitions',
     desc: 'Match each Kafka concept to its correct definition.',
     zones: [
       { id: 'what', label: 'What partitions are' },
@@ -506,7 +633,7 @@ const topics = [
       { text: 'Server checks if key seen before processing', zone: 'how', def: 'If the server has seen this idempotency key before, it returns the cached result without reprocessing.' },
       { text: 'Store seen keys in Redis for fast lookup', zone: 'how', def: 'Redis is fast — checking if a key exists takes microseconds, perfect for high-volume APIs.' },
       { text: 'GET — idempotent, same result every time', zone: 'http', def: 'Reading data never changes state — GET 100 times gives the same result each time.' },
-      { text: 'PUT, DELETE — idempotent', zone: 'http', def: 'PUT replaces a resource — doing it twice with the same data leaves the same result. DELETE removes once.' },
+      { text: 'PUT, DELETE — idempotent', zone: 'http', def: 'PUT replaces a resource — doing it twice with the same data leaves the same result.' },
       { text: 'POST — NOT idempotent, creates new each time', zone: 'http', def: 'POST creates a new resource — calling it twice creates two resources, not one.' },
     ]
   },
@@ -523,11 +650,11 @@ const topics = [
       { text: 'Publisher doesnt know who is subscribing', zone: 'what', def: 'The order service just publishes an event — it doesnt care who listens or what they do with it.' },
       { text: 'Each consumer reacts independently and async', zone: 'what', def: 'Email, inventory, and analytics all consume the same event on their own schedule.' },
       { text: 'If one consumer fails others keep running', zone: 'why', def: 'If the email service crashes, inventory and analytics still process the event — no cascade failure.' },
-      { text: 'Decouples services from each other', zone: 'why', def: 'Adding a new consumer (e.g. a fraud detection service) requires zero changes to the publisher.' },
+      { text: 'Decouples services from each other', zone: 'why', def: 'Adding a new consumer requires zero changes to the publisher.' },
       { text: 'No single point of failure in the flow', zone: 'why', def: 'Fan out distributes risk — no one service failing breaks the whole downstream chain.' },
       { text: 'Order placed — notify restaurant, driver, analytics', zone: 'examples', def: 'One order event fans out to three independent consumers each doing their own thing.' },
-      { text: 'User signed up — email, push, analytics all fire', zone: 'examples', def: 'Sign up event fans out to welcome email, push notification, and analytics tracking simultaneously.' },
-      { text: 'IoT device event — enrich, store, alert', zone: 'examples', def: 'A device publishes telemetry — enrichment, storage, and alerting services all consume it independently.' },
+      { text: 'User signed up — email, push, analytics all fire', zone: 'examples', def: 'Sign up event fans out to welcome email, push notification, and analytics simultaneously.' },
+      { text: 'IoT device event — enrich, store, alert', zone: 'examples', def: 'A device publishes telemetry — enrichment, storage, and alerting services all consume independently.' },
     ]
   },
   {
@@ -541,10 +668,10 @@ const topics = [
     items: [
       { text: 'Roll out new version to small % of traffic first', zone: 'what', def: 'Instead of deploying to everyone at once, start with 5-10% of users to validate the new version.' },
       { text: 'Limit blast radius if something goes wrong', zone: 'what', def: 'If the new version has a bug, only the small canary % of users are affected — not everyone.' },
-      { text: 'Safer than deploying to 100% at once', zone: 'what', def: 'Named after canaries in coal mines — send a small signal first to detect danger before full exposure.' },
-      { text: '10% traffic to new version, 90% to stable', zone: 'flow', def: 'The load balancer routes a small slice of traffic to the new version pods while most goes to stable.' },
+      { text: 'Safer than deploying to 100% at once', zone: 'what', def: 'Named after canaries in coal mines — send a small signal first to detect danger.' },
+      { text: '10% traffic to new version, 90% to stable', zone: 'flow', def: 'The load balancer routes a small slice of traffic to the new version while most goes to stable.' },
       { text: 'Monitor error rates, latency, CPU', zone: 'flow', def: 'Watch the canary metrics closely — if anything spikes compared to stable, roll back immediately.' },
-      { text: 'Healthy — increase to 100% gradually', zone: 'flow', def: 'If the canary looks good, incrementally increase traffic — 10% → 25% → 50% → 100%.' },
+      { text: 'Healthy — increase to 100% gradually', zone: 'flow', def: 'If the canary looks good, incrementally increase traffic — 10% then 25% then 50% then 100%.' },
       { text: 'Problems — route all traffic back to stable', zone: 'flow', def: 'Instant rollback — flip traffic back to the stable version with zero downtime.' },
       { text: 'Canary — deploy to subset of users', zone: 'vs', def: 'Canary is a deployment strategy — you ship code to a slice of infrastructure.' },
       { text: 'Feature flag — flip switch without deploying', zone: 'vs', def: 'Feature flags control features at runtime — no deployment needed, just toggle a config value.' },
@@ -561,7 +688,7 @@ const topics = [
     ],
     items: [
       { text: 'Multiple threads running in parallel on CPU cores', zone: 'thread', def: 'True multithreading uses multiple CPU cores simultaneously — real parallel execution.' },
-      { text: 'Thread pool — spread work across cores', zone: 'thread', def: 'A thread pool pre-creates threads and assigns work to them — avoids the cost of creating threads on demand.' },
+      { text: 'Thread pool — spread work across cores', zone: 'thread', def: 'A thread pool pre-creates threads and assigns work — avoids the cost of creating threads on demand.' },
       { text: 'Good for CPU heavy work like image processing', zone: 'thread', def: 'If your code is actively computing — transforming data, hashing, encoding — use thread pools.' },
       { text: 'Parallel.ForEach in C#, ExecutorService in Java', zone: 'thread', def: 'Language-level APIs for distributing CPU work across a pool of threads.' },
       { text: 'One thread that frees itself while waiting', zone: 'async', def: 'Async/await releases the thread while waiting for I/O — the thread can handle other work.' },
@@ -583,7 +710,7 @@ const topics = [
     ],
     items: [
       { text: '[ApiController] [Route] attributes', zone: 'aspnet', def: 'C# attributes that mark a class as an API controller and define its URL route.' },
-      { text: 'Program.cs — configure services and middleware', zone: 'aspnet', def: 'The entry point of an ASP.NET app — register your DI services and configure the middleware pipeline here.' },
+      { text: 'Program.cs — configure services and middleware', zone: 'aspnet', def: 'The entry point of an ASP.NET app — register DI services and configure the middleware pipeline.' },
       { text: 'appsettings.json — config and secrets', zone: 'aspnet', def: 'ASP.NET reads configuration from appsettings.json — connection strings, API keys, settings.' },
       { text: 'Entity Framework Core — ORM', zone: 'aspnet', def: 'EF Core maps C# classes to database tables — write C# instead of SQL.' },
       { text: 'app.UseAuthentication() middleware', zone: 'aspnet', def: 'Adds auth middleware to the pipeline — every request passes through this before hitting controllers.' },
@@ -612,7 +739,7 @@ const topics = [
       { text: 'Transient / Prototype — new instance every time', zone: 'lifetimes', def: 'A brand new instance is created every time the dependency is requested from the container.' },
       { text: 'Decouples classes from their implementations', zone: 'why', def: 'Classes depend on interfaces not concrete types — easy to swap implementations without changing callers.' },
       { text: 'Easy to swap implementations', zone: 'why', def: 'Change one line in Program.cs or a @Bean and every class that uses the interface gets the new version.' },
-      { text: 'Easy to mock in unit tests', zone: 'why', def: 'Inject a mock implementation in tests instead of the real one — no database needed to test business logic.' },
+      { text: 'Easy to mock in unit tests', zone: 'why', def: 'Inject a mock in tests instead of the real thing — no database needed to test business logic.' },
     ]
   },
   {
@@ -647,11 +774,11 @@ const topics = [
       { id: 'config', label: 'Secrets / ConfigMap / HPA' },
     ],
     items: [
-      { text: 'Routes external traffic into the cluster', zone: 'ingress', def: 'Ingress is the front door — it receives traffic from outside and routes it to the right service inside.' },
-      { text: 'Stable endpoint — load balances across pods', zone: 'service', def: 'A Service gives pods a stable DNS name and IP — it load balances requests across all healthy pods.' },
+      { text: 'Routes external traffic into the cluster', zone: 'ingress', def: 'Ingress is the front door — receives traffic from outside and routes it to the right service inside.' },
+      { text: 'Stable endpoint — load balances across pods', zone: 'service', def: 'A Service gives pods a stable DNS name and IP — load balances requests across all healthy pods.' },
       { text: 'Manages replicas, rolling updates, rollbacks', zone: 'deployment', def: 'A Deployment declares desired state — how many replicas, which image — K8s makes it so.' },
       { text: 'Smallest deployable unit — runs your container', zone: 'pod', def: 'A pod is one instance of your app running — if it dies K8s replaces it automatically.' },
-      { text: '1 or more containers sharing same network', zone: 'pod', def: 'Containers in the same pod share a network namespace — they can talk to each other on localhost.' },
+      { text: '1 or more containers sharing same network', zone: 'pod', def: 'Containers in the same pod share a network namespace — they can talk on localhost.' },
       { text: 'Secrets — encrypted conn strings and API keys', zone: 'config', def: 'Kubernetes Secrets store sensitive config — injected as env vars into pods at runtime.' },
       { text: 'ConfigMap — non-sensitive env vars and settings', zone: 'config', def: 'ConfigMaps store non-sensitive config data — feature flags, API URLs, environment settings.' },
       { text: 'HPA — auto scales pods based on CPU/memory', zone: 'config', def: 'Horizontal Pod Autoscaler watches metrics and automatically adds or removes pod replicas.' },
@@ -671,9 +798,9 @@ const topics = [
       { text: 'Registry — stores images (Azure ACR, Docker Hub)', zone: 'build', def: 'A registry is a repository for Docker images — push images up, pull them down on any machine.' },
       { text: 'docker push / pull — share images via registry', zone: 'build', def: 'Push uploads your image to the registry, pull downloads it — how images move between machines.' },
       { text: 'Image — snapshot of app, read only', zone: 'concepts', def: 'An image is a frozen, immutable snapshot of your app and all its dependencies at build time.' },
-      { text: 'Container — running instance of an image', zone: 'concepts', def: 'A container is a live running image — start one image, get a container. Start it again, get another.' },
+      { text: 'Container — running instance of an image', zone: 'concepts', def: 'A container is a live running image — start one image, get a container. Start again, get another.' },
       { text: 'Image = blueprint, container = running house', zone: 'concepts', def: 'The image is the plan, the container is the actual built thing — one blueprint, many houses.' },
-      { text: 'Containers share OS — lighter than VMs', zone: 'concepts', def: 'Containers share the host OS kernel — much lighter than VMs which each run a full operating system.' },
+      { text: 'Containers share OS — lighter than VMs', zone: 'concepts', def: 'Containers share the host OS kernel — much lighter than VMs which each run a full OS.' },
       { text: 'Docker builds the image', zone: 'k8s', def: 'Docker is the build tool — it packages your app into an image stored in a registry.' },
       { text: 'Kubernetes runs and orchestrates containers', zone: 'k8s', def: 'Kubernetes pulls images from the registry and runs them as containers — handles scaling and restarts.' },
     ]
@@ -691,9 +818,9 @@ const topics = [
       { text: 'Handles tokens, user management, social login', zone: 'what', def: 'Auth0 manages the whole auth stack — JWTs, refresh tokens, password resets, Google login.' },
       { text: 'Dont reinvent auth — use it to move fast', zone: 'what', def: 'Building auth correctly is hard and security-critical — Auth0 lets you skip that complexity.' },
       { text: 'App redirects to Auth0 universal login page', zone: 'flow', def: 'Instead of your own login form, users are sent to Auth0s hosted login page.' },
-      { text: 'Auth0 verifies credentials', zone: 'flow', def: 'Auth0 handles the actual credential check — against its own user store or external identity providers.' },
+      { text: 'Auth0 verifies credentials', zone: 'flow', def: 'Auth0 handles the actual credential check — against its own user store or external providers.' },
       { text: 'Returns access token, ID token, refresh token', zone: 'flow', def: 'Three tokens: access token for API calls, ID token for user info, refresh token to renew access.' },
-      { text: 'Tenant — your Auth0 workspace (dev/staging/prod)', zone: 'concepts', def: 'A tenant is an isolated Auth0 environment — you typically have one per deployment environment.' },
+      { text: 'Tenant — your Auth0 workspace (dev/staging/prod)', zone: 'concepts', def: 'A tenant is an isolated Auth0 environment — typically one per deployment environment.' },
       { text: 'Application — your frontend or backend registered', zone: 'concepts', def: 'You register each app in Auth0 — it gets a client ID used to identify which app is requesting auth.' },
       { text: 'Actions — run custom code during login flow', zone: 'concepts', def: 'Actions let you inject custom logic during auth — add custom claims, enrich tokens, call external APIs.' },
       { text: 'Social connections — Google, GitHub, Microsoft', zone: 'concepts', def: 'Auth0 handles OAuth with social providers — users click Sign in with Google and Auth0 does the rest.' },
@@ -733,14 +860,14 @@ const topics = [
       { text: 'Prevents cascade failures across services', zone: 'what', def: 'Without a circuit breaker, one slow service can cause every service that calls it to back up and fail.' },
       { text: 'Closed — everything working, requests flow normally', zone: 'states', def: 'Closed is the normal state — requests go through, the circuit is intact.' },
       { text: 'Open — too many failures, stop calling service', zone: 'states', def: 'After too many failures the circuit opens — requests are rejected immediately without calling the service.' },
-      { text: 'Half-open — try one request to see if service recovered', zone: 'states', def: 'After a timeout the circuit tries one test request — if it succeeds, circuit closes again.' },
+      { text: 'Half-open — try one request to see if recovered', zone: 'states', def: 'After a timeout the circuit tries one test request — if it succeeds, circuit closes again.' },
       { text: 'Fail fast — dont wait for timeout every request', zone: 'why', def: 'With circuit breaker open, requests fail immediately instead of waiting 30 seconds to time out.' },
       { text: 'Give failing service time to recover', zone: 'why', def: 'Stopping traffic gives the struggling service breathing room to recover without being hammered.' },
       { text: 'Protect your system from downstream failures', zone: 'why', def: 'Your service stays healthy even when dependencies fail — the circuit breaker absorbs the impact.' },
     ]
   },
   {
-    id: 'retry', category: 'System Design', title: 'Retry Policies & Exponential Backoff',
+    id: 'retry', category: 'System Design', title: 'Retry & Exponential Backoff',
     desc: 'Match each retry concept to its category.',
     zones: [
       { id: 'what', label: 'What retry policies are' },
@@ -761,7 +888,7 @@ const topics = [
     ]
   },
   {
-    id: 'observability', category: 'System Design', title: 'Observability — The 3 Pillars',
+    id: 'observability', category: 'System Design', title: 'Observability — 3 Pillars',
     desc: 'Match each concept to the correct observability pillar.',
     zones: [
       { id: 'logs', label: 'Logging' },
@@ -772,41 +899,56 @@ const topics = [
       { text: 'Text records of what happened and when', zone: 'logs', def: 'Logs are timestamped text entries that record events — errors, warnings, info messages.' },
       { text: 'Debug individual events and errors', zone: 'logs', def: 'When something goes wrong you read logs to understand exactly what happened and when.' },
       { text: 'Application Insights, Splunk, ELK stack', zone: 'logs', def: 'Popular logging tools — collect, index, and search logs across all your services.' },
-      { text: 'Structured — include timestamp, level, context', zone: 'logs', def: 'Good logs include severity level, timestamp, service name, correlation ID, and relevant context.' },
+      { text: 'Structured — include timestamp, level, context', zone: 'logs', def: 'Good logs include severity level, timestamp, service name, correlation ID, and context.' },
       { text: 'Numerical measurements over time', zone: 'metrics', def: 'Metrics are numbers that change over time — request rate, error rate, CPU, memory, latency.' },
       { text: 'CPU usage, error rate, request latency', zone: 'metrics', def: 'The core health indicators — these tell you if your system is behaving normally at a glance.' },
       { text: 'Alerts when threshold crossed', zone: 'metrics', def: 'Set up alerts on metrics — error rate above 1% for 5 minutes triggers an incident.' },
       { text: 'Prometheus, Grafana, Azure Monitor', zone: 'metrics', def: 'Prometheus collects metrics, Grafana visualizes them — a standard production monitoring stack.' },
       { text: 'Follow one request across multiple services', zone: 'traces', def: 'A trace follows a single user request through every service it touches — end to end.' },
       { text: 'Find where latency is happening in the chain', zone: 'traces', def: 'Traces show exactly which service is slow — is it the DB call, the auth check, or the API?' },
-      { text: 'Correlation ID ties requests across services', zone: 'traces', def: 'A unique ID attached to a request propagates through all services — ties logs together across the system.' },
+      { text: 'Correlation ID ties requests across services', zone: 'traces', def: 'A unique ID attached to a request propagates through all services — ties logs together.' },
       { text: 'Jaeger, Zipkin, Azure Application Insights', zone: 'traces', def: 'Distributed tracing tools — visualize the full request path across all services as a timeline.' },
     ]
   }
 ];
 
+// ── STATE ──
 let completed = new Set();
 let currentTopic = null;
 let draggedItem = null;
+let selectedTapItem = null;
 let glossaryOpen = false;
+const isMobile = () => window.innerWidth <= 768;
 
+// ── DRAWER ──
+function toggleDrawer() {
+  document.getElementById('drawer').classList.toggle('open');
+  document.getElementById('drawerOverlay').classList.toggle('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+
+// ── PROGRESS ──
 function updateProgress() {
   const pct = Math.round((completed.size / topics.length) * 100);
-  document.getElementById('progressText').textContent = `${completed.size} / ${topics.length} completed`;
+  document.getElementById('progressText').textContent = `${completed.size}/${topics.length}`;
   document.getElementById('progressFill').style.width = pct + '%';
   renderSidebar();
 }
 
-function renderSidebar() {
-  const sidebar = document.getElementById('sidebar');
+// ── SIDEBAR ──
+function sidebarHTML() {
   const categories = [...new Set(topics.map(t => t.category))];
-  sidebar.innerHTML = categories.map(cat => {
+  return categories.map(cat => {
     const catTopics = topics.filter(t => t.category === cat);
     return `
       <div class="sidebar-section">${cat}</div>
       ${catTopics.map(t => `
         <button class="topic-btn ${currentTopic?.id === t.id ? 'active' : ''} ${completed.has(t.id) ? 'completed' : ''}"
-          onclick="loadTopic('${t.id}')">
+          onclick="loadTopic('${t.id}'); closeDrawer();">
           ${t.title}
           <span class="status">${completed.has(t.id) ? '✓' : ''}</span>
         </button>
@@ -815,14 +957,26 @@ function renderSidebar() {
   }).join('');
 }
 
+function renderSidebar() {
+  document.getElementById('sidebar').innerHTML = sidebarHTML();
+  document.getElementById('drawerSidebar').innerHTML = sidebarHTML();
+}
+
+// ── LOAD TOPIC ──
 function loadTopic(id) {
   currentTopic = topics.find(t => t.id === id);
   glossaryOpen = false;
-  renderTopic();
+  selectedTapItem = null;
+  if (isMobile()) renderMobileTopic();
+  else renderDesktopTopic();
   renderSidebar();
+  document.getElementById('content').scrollTop = 0;
 }
 
-function renderTopic() {
+// ══════════════════════════════
+// DESKTOP RENDER
+// ══════════════════════════════
+function renderDesktopTopic() {
   const t = currentTopic;
   const shuffled = [...t.items].sort(() => Math.random() - 0.5);
   const cols = t.zones.length <= 3 ? t.zones.length : 2;
@@ -840,8 +994,9 @@ function renderTopic() {
     <div class="drag-section">
       <h3>Drag these items</h3>
       <div class="items-bank" id="bank">
-        ${shuffled.map((item, i) => `
-          <div class="drag-item" draggable="true" data-idx="${i}" data-text="${escAttr(item.text)}" data-zone="${item.zone}"
+        ${shuffled.map(item => `
+          <div class="drag-item" draggable="true"
+            data-text="${ea(item.text)}" data-zone="${item.zone}"
             ondragstart="onDragStart(event)" ondragend="onDragEnd(event)">
             ${item.text}
           </div>
@@ -851,15 +1006,12 @@ function renderTopic() {
 
     <div class="drag-section">
       <h3>Drop zones</h3>
-      <div class="drop-zones" style="grid-template-columns: repeat(${cols}, 1fr)">
-        ${t.zones.map(zone => `
+      <div class="drop-zones" style="grid-template-columns:repeat(${cols},1fr)">
+        ${t.zones.map(z => `
           <div class="drop-zone-wrapper">
-            <div class="drop-zone-label">
-              ${zone.label}
-              ${zone.hint ? `<span class="hint">— ${zone.hint}</span>` : ''}
-            </div>
-            <div class="drop-zone" id="zone-${zone.id}"
-              ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${zone.id}')">
+            <div class="drop-zone-label">${z.label}${z.hint ? `<span class="hint">— ${z.hint}</span>` : ''}</div>
+            <div class="drop-zone" id="zone-${z.id}"
+              ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${z.id}')">
               <span class="drop-zone-placeholder">Drop items here</span>
             </div>
           </div>
@@ -867,11 +1019,211 @@ function renderTopic() {
       </div>
     </div>
 
-    <!-- GLOSSARY -->
+    ${glossaryHTML()}
+    <div class="feedback" id="feedback"></div>
+    <div class="btn-row">
+      <button class="check-btn" onclick="checkAnswers()">Check answers</button>
+      <button class="next-btn" id="nextBtn" onclick="goNext()">Next topic →</button>
+      <span class="score-badge" id="scoreBadge"></span>
+    </div>
+  `;
+}
+
+// ══════════════════════════════
+// MOBILE RENDER — TAP TO PLACE
+// ══════════════════════════════
+function renderMobileTopic() {
+  const t = currentTopic;
+  const shuffled = [...t.items].sort(() => Math.random() - 0.5);
+
+  document.getElementById('content').innerHTML = `
+    <div class="quiz-header">
+      <div>
+        <div class="topic-tag">${t.category}</div>
+        <div class="quiz-title">${t.title}</div>
+        <div class="quiz-desc">${t.desc}</div>
+      </div>
+      <button class="reset-btn" onclick="loadTopic('${t.id}')">↺</button>
+    </div>
+
+    <div class="tap-hint">👆 Tap an item, then tap a zone to place it. Tap a placed item to return it.</div>
+
+    <div class="drag-section">
+      <h3>Tap an item to select it</h3>
+      <div class="items-bank" id="bank">
+        ${shuffled.map((item, i) => `
+          <div class="tap-item" id="tap-${i}"
+            data-text="${ea(item.text)}" data-zone="${item.zone}" data-idx="${i}"
+            onclick="tapSelectItem(this)">
+            ${item.text}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="drag-section">
+      <h3>Tap a zone to place selected item</h3>
+      <div class="drop-zones" style="grid-template-columns:1fr">
+        ${t.zones.map(z => `
+          <div class="drop-zone-wrapper">
+            <div class="drop-zone-label">${z.label}${z.hint ? `<span class="hint"> — ${z.hint}</span>` : ''}</div>
+            <div class="tap-zone" id="zone-${z.id}" data-zone-id="${z.id}" onclick="tapPlaceItem('${z.id}')">
+              <span class="drop-zone-placeholder" id="ph-${z.id}">Tap to place here</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    ${glossaryHTML()}
+    <div class="feedback" id="feedback"></div>
+    <div class="btn-row">
+      <button class="check-btn" onclick="checkAnswersMobile()">Check answers</button>
+      <button class="next-btn" id="nextBtn" onclick="goNext()">Next →</button>
+      <span class="score-badge" id="scoreBadge"></span>
+    </div>
+  `;
+}
+
+// ── TAP LOGIC ──
+function tapSelectItem(el) {
+  if (el.classList.contains('placed') || el.classList.contains('correct')) return;
+  document.querySelectorAll('.tap-item.selected').forEach(e => e.classList.remove('selected'));
+  if (selectedTapItem === el) { selectedTapItem = null; return; }
+  el.classList.add('selected');
+  selectedTapItem = el;
+  document.querySelectorAll('.tap-zone').forEach(z => z.classList.add('highlight'));
+}
+
+function tapPlaceItem(zoneId) {
+  if (!selectedTapItem) return;
+  const zoneEl = document.getElementById(`zone-${zoneId}`);
+  const ph = document.getElementById(`ph-${zoneId}`);
+  if (ph) ph.style.display = 'none';
+
+  const placedEl = document.createElement('div');
+  placedEl.className = 'tap-placed-item';
+  placedEl.textContent = selectedTapItem.dataset.text;
+  placedEl.dataset.text = selectedTapItem.dataset.text;
+  placedEl.dataset.zone = selectedTapItem.dataset.zone;
+  placedEl.dataset.srcIdx = selectedTapItem.dataset.idx;
+  placedEl.dataset.placedIn = zoneId;
+  placedEl.onclick = () => tapReturnItem(placedEl, zoneId);
+  zoneEl.appendChild(placedEl);
+
+  selectedTapItem.classList.add('placed');
+  selectedTapItem.classList.remove('selected');
+  selectedTapItem = null;
+  document.querySelectorAll('.tap-zone').forEach(z => z.classList.remove('highlight'));
+}
+
+function tapReturnItem(placedEl, zoneId) {
+  if (placedEl.classList.contains('correct')) return;
+  const idx = placedEl.dataset.srcIdx;
+  const srcEl = document.getElementById(`tap-${idx}`);
+  if (srcEl) { srcEl.classList.remove('placed'); }
+  const ph = document.getElementById(`ph-${zoneId}`);
+  if (ph && document.getElementById(`zone-${zoneId}`).querySelectorAll('.tap-placed-item').length <= 1) {
+    ph.style.display = '';
+  }
+  placedEl.remove();
+}
+
+function checkAnswersMobile() {
+  let correct = 0;
+  const total = currentTopic.items.length;
+
+  currentTopic.zones.forEach(zone => {
+    const zoneEl = document.getElementById(`zone-${zone.id}`);
+    zoneEl.querySelectorAll('.tap-placed-item').forEach(item => {
+      if (item.dataset.zone === zone.id) {
+        item.classList.add('correct');
+        correct++;
+      } else {
+        item.classList.add('incorrect');
+        setTimeout(() => item.classList.remove('incorrect'), 400);
+      }
+    });
+  });
+
+  const unplaced = document.querySelectorAll('.tap-item:not(.placed)').length;
+  showResult(correct, total, unplaced === 0);
+}
+
+// ── DRAG LOGIC (desktop) ──
+function onDragStart(e) { draggedItem = e.target; e.target.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function onDragEnd(e) { e.target.classList.remove('dragging'); }
+function onDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function onDrop(e, zoneId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!draggedItem) return;
+  const ph = e.currentTarget.querySelector('.drop-zone-placeholder');
+  if (ph) ph.remove();
+  const clone = document.createElement('div');
+  clone.className = 'drag-item';
+  clone.textContent = draggedItem.dataset.text;
+  clone.dataset.text = draggedItem.dataset.text;
+  clone.dataset.zone = draggedItem.dataset.zone;
+  clone.draggable = true;
+  clone.ondragstart = onDragStart;
+  clone.ondragend = onDragEnd;
+  e.currentTarget.appendChild(clone);
+  draggedItem.remove();
+  draggedItem = null;
+}
+
+function checkAnswers() {
+  let correct = 0;
+  const total = currentTopic.items.length;
+  currentTopic.zones.forEach(zone => {
+    document.getElementById(`zone-${zone.id}`).querySelectorAll('.drag-item').forEach(item => {
+      if (item.dataset.zone === zone.id) { item.classList.add('correct'); correct++; }
+      else { item.classList.add('incorrect'); setTimeout(() => item.classList.remove('incorrect'), 400); }
+    });
+  });
+  const unplaced = document.getElementById('bank').querySelectorAll('.drag-item').length;
+  showResult(correct, total, unplaced === 0);
+}
+
+function showResult(correct, total, allPlaced) {
+  const feedback = document.getElementById('feedback');
+  const scoreBadge = document.getElementById('scoreBadge');
+  const nextBtn = document.getElementById('nextBtn');
+  const pct = Math.round((correct / total) * 100);
+
+  if (correct === total && allPlaced) {
+    feedback.className = 'feedback show success';
+    feedback.innerHTML = `<strong>🎉 Perfect!</strong> All ${total} items correctly placed.`;
+    scoreBadge.className = 'score-badge show perfect';
+    scoreBadge.textContent = `${correct}/${total} Perfect`;
+    completed.add(currentTopic.id);
+    updateProgress();
+  } else if (pct >= 70) {
+    feedback.className = 'feedback show partial';
+    feedback.innerHTML = `<strong>Almost!</strong> ${correct}/${total} correct. Check definitions below.`;
+    scoreBadge.className = 'score-badge show good';
+    scoreBadge.textContent = `${correct}/${total}`;
+    openGlossary();
+  } else {
+    feedback.className = 'feedback show error';
+    feedback.innerHTML = `<strong>Keep going!</strong> ${correct}/${total} correct. Check definitions below and try again.`;
+    scoreBadge.className = 'score-badge show retry';
+    scoreBadge.textContent = `${correct}/${total}`;
+    openGlossary();
+  }
+  nextBtn.classList.add('show');
+}
+
+// ── GLOSSARY ──
+function glossaryHTML() {
+  const t = currentTopic;
+  return `
     <div class="glossary-section">
       <div class="glossary-header" onclick="toggleGlossary()">
-        <h3>📖 Term definitions — click to ${glossaryOpen ? 'hide' : 'show'}</h3>
-        <span class="glossary-toggle">${glossaryOpen ? '▲ hide' : '▼ show'}</span>
+        <h3>📖 Definitions — tap to ${glossaryOpen ? 'hide' : 'show'}</h3>
+        <span class="glossary-toggle">${glossaryOpen ? '▲' : '▼'}</span>
       </div>
       <div class="glossary-body ${glossaryOpen ? 'open' : ''}" id="glossaryBody">
         <div class="glossary-grid">
@@ -884,115 +1236,20 @@ function renderTopic() {
         </div>
       </div>
     </div>
-
-    <div class="feedback" id="feedback"></div>
-
-    <div class="btn-row">
-      <button class="check-btn" onclick="checkAnswers()">Check answers</button>
-      <button class="next-btn" id="nextBtn" onclick="goNext()">Next topic →</button>
-      <span class="score-badge" id="scoreBadge"></span>
-    </div>
   `;
 }
 
 function toggleGlossary() {
   glossaryOpen = !glossaryOpen;
   const body = document.getElementById('glossaryBody');
-  const header = body.previousElementSibling;
+  const hdr = body.previousElementSibling;
   body.classList.toggle('open', glossaryOpen);
-  header.querySelector('h3').textContent = `📖 Term definitions — click to ${glossaryOpen ? 'hide' : 'show'}`;
-  header.querySelector('.glossary-toggle').textContent = glossaryOpen ? '▲ hide' : '▼ show';
+  hdr.querySelector('h3').textContent = `📖 Definitions — tap to ${glossaryOpen ? 'hide' : 'show'}`;
+  hdr.querySelector('.glossary-toggle').textContent = glossaryOpen ? '▲' : '▼';
 }
 
-function escAttr(str) {
-  return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function onDragStart(e) {
-  draggedItem = e.target;
-  e.target.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-
-function onDragEnd(e) { e.target.classList.remove('dragging'); }
-
-function onDragOver(e) {
-  e.preventDefault();
-  e.currentTarget.classList.add('drag-over');
-}
-
-function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-
-function onDrop(e, zoneId) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  if (!draggedItem) return;
-
-  const placeholder = e.currentTarget.querySelector('.drop-zone-placeholder');
-  if (placeholder) placeholder.remove();
-
-  const clone = document.createElement('div');
-  clone.className = 'drag-item';
-  clone.textContent = draggedItem.dataset.text;
-  clone.dataset.text = draggedItem.dataset.text;
-  clone.dataset.zone = draggedItem.dataset.zone;
-  clone.draggable = true;
-  clone.ondragstart = onDragStart;
-  clone.ondragend = onDragEnd;
-  e.currentTarget.appendChild(clone);
-
-  draggedItem.remove();
-  draggedItem = null;
-}
-
-function checkAnswers() {
-  let correct = 0;
-  const total = currentTopic.items.length;
-
-  currentTopic.zones.forEach(zone => {
-    const zoneEl = document.getElementById(`zone-${zone.id}`);
-    zoneEl.querySelectorAll('.drag-item').forEach(item => {
-      if (item.dataset.zone === zone.id) {
-        item.classList.add('correct');
-        item.classList.remove('incorrect');
-        correct++;
-      } else {
-        item.classList.add('incorrect');
-        item.classList.remove('correct');
-        setTimeout(() => item.classList.remove('incorrect'), 400);
-      }
-    });
-  });
-
-  const bank = document.getElementById('bank');
-  const unplaced = bank.querySelectorAll('.drag-item').length;
-  const feedback = document.getElementById('feedback');
-  const scoreBadge = document.getElementById('scoreBadge');
-  const nextBtn = document.getElementById('nextBtn');
-  const pct = Math.round((correct / total) * 100);
-
-  if (correct === total && unplaced === 0) {
-    feedback.className = 'feedback show success';
-    feedback.innerHTML = `<strong>🎉 Perfect!</strong> All ${total} items correctly placed.`;
-    scoreBadge.className = 'score-badge show perfect';
-    scoreBadge.textContent = `${correct}/${total} — Perfect`;
-    completed.add(currentTopic.id);
-    updateProgress();
-  } else if (pct >= 70) {
-    feedback.className = 'feedback show partial';
-    feedback.innerHTML = `<strong>Almost there!</strong> ${correct}/${total} correct. Check highlighted items — definitions below might help.`;
-    scoreBadge.className = 'score-badge show good';
-    scoreBadge.textContent = `${correct}/${total}`;
-    if (!glossaryOpen) { glossaryOpen = true; toggleGlossary(); }
-  } else {
-    feedback.className = 'feedback show error';
-    feedback.innerHTML = `<strong>Keep going!</strong> ${correct}/${total} correct. Check the definitions section below and try again.`;
-    scoreBadge.className = 'score-badge show retry';
-    scoreBadge.textContent = `${correct}/${total} — Review needed`;
-    if (!glossaryOpen) { glossaryOpen = true; toggleGlossary(); }
-  }
-
-  nextBtn.classList.add('show');
+function openGlossary() {
+  if (!glossaryOpen) toggleGlossary();
 }
 
 function goNext() {
@@ -1000,24 +1257,36 @@ function goNext() {
   loadTopic(topics[(idx + 1) % topics.length].id);
 }
 
+function ea(str) { return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+// ── HOME ──
 function renderHome() {
   document.getElementById('content').innerHTML = `
     <div class="home">
       <div>
         <div class="topic-tag">System Design Interview Prep</div>
         <h1>Drag & Drop <span>Quiz</span></h1>
-        <p>Reinforce your system design knowledge by dragging concepts to the right categories. Pick a topic from the sidebar to start. Each page has a definitions section at the bottom to help when you get stuck.</p>
+        <p>Tap any topic in the menu to start. Each topic has definitions at the bottom to help when you get stuck.</p>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="num">${topics.length}</div><div class="label">Total topics</div></div>
-        <div class="stat-card"><div class="num" id="homeCompleted">0</div><div class="label">Completed</div></div>
-        <div class="stat-card"><div class="num" id="homePct">0%</div><div class="label">Mastered</div></div>
+        <div class="stat-card"><div class="num">${topics.length}</div><div class="label">Topics</div></div>
+        <div class="stat-card"><div class="num" id="homeC">0</div><div class="label">Done</div></div>
+        <div class="stat-card"><div class="num" id="homeP">0%</div><div class="label">Mastered</div></div>
       </div>
-      <button class="check-btn" onclick="loadTopic('${topics[0].id}')">Start first topic →</button>
+      <button class="check-btn" onclick="loadTopic('${topics[0].id}')">Start →</button>
     </div>
   `;
 }
 
+// ── RESIZE HANDLER ──
+window.addEventListener('resize', () => {
+  if (currentTopic) {
+    if (isMobile()) renderMobileTopic();
+    else renderDesktopTopic();
+  }
+});
+
+// ── INIT ──
 renderHome();
 renderSidebar();
 </script>
