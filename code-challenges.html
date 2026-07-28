@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1117">
+<title>Code Challenges</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #6c7bff;
+    --accent2: #4ecca3;
+    --text: #e8eaf6;
+    --text2: #8b90b8;
+    --success: #4ecca3;
+    --fail: #ff6b6b;
+    --warn: #ffc864;
+    --keyword: #c792ea;
+    --string: #c3e88d;
+    --number: #f78c6c;
+    --comment: #546e7a;
+    --fn: #82aaff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+
+  /* NAV */
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; padding: 0 16px; height: 52px; flex-shrink: 0; }
+  .nav-logo { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; margin-right: auto; }
+  .nav-back { font-size: 12px; color: var(--text2); text-decoration: none; padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; }
+  .nav-back:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
+  .tab-btn { padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-btn .diff { font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 6px; font-weight: 700; }
+  .diff-easy { background: rgba(78,204,163,0.15); color: var(--success); }
+  .diff-medium { background: rgba(255,200,100,0.15); color: var(--warn); }
+  .diff-hard { background: rgba(255,107,107,0.15); color: var(--fail); }
+
+  /* MAIN */
+  main { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; -webkit-overflow-scrolling: touch; }
+
+  /* CHALLENGE HEADER */
+  .challenge-header { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .ch-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .ch-title { font-size: 20px; font-weight: 700; }
+  .ch-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; flex-shrink: 0; }
+  .ch-desc { color: var(--text2); font-size: 13px; line-height: 1.6; margin-bottom: 14px; }
+  .ch-concepts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .concept-tag { font-size: 11px; padding: 3px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; color: var(--text2); }
+
+  /* CODE BLOCK */
+  .code-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .code-header span { font-size: 11px; color: var(--text2); font-family: monospace; }
+  .code-body { padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.8; overflow-x: auto; }
+  .code-body .line { display: flex; gap: 12px; }
+  .ln { color: var(--comment); user-select: none; width: 20px; text-align: right; flex-shrink: 0; font-size: 12px; }
+  .kw { color: var(--keyword); }
+  .fn { color: var(--fn); }
+  .str { color: var(--string); }
+  .num { color: var(--number); }
+  .cm { color: var(--comment); font-style: italic; }
+  .blank { display: inline-block; min-width: 80px; height: 22px; background: var(--surface2); border: 1.5px dashed var(--border); border-radius: 6px; vertical-align: middle; cursor: pointer; transition: all 0.15s; position: relative; }
+  .blank.drag-over { border-color: var(--accent); background: rgba(108,123,255,0.1); }
+  .blank.filled { border-style: solid; border-color: var(--border); background: var(--surface); padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--accent2); font-size: 12px; cursor: pointer; }
+  .blank.correct { border-color: var(--success); background: rgba(78,204,163,0.1); color: var(--success); }
+  .blank.incorrect { border-color: var(--fail); background: rgba(255,107,107,0.1); color: var(--fail); animation: shake 0.3s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+
+  /* ANSWER BANK */
+  .answer-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .answer-section h3 { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  .answer-bank { display: flex; flex-wrap: wrap; gap: 8px; }
+  .answer-chip {
+    padding: 7px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13px; font-family: 'Courier New', monospace;
+    cursor: grab; transition: all 0.15s; user-select: none;
+  }
+  .answer-chip:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .answer-chip.dragging { opacity: 0.4; }
+  .answer-chip.used { opacity: 0.3; cursor: default; pointer-events: none; }
+  .answer-chip.correct-chip { border-color: var(--success); color: var(--success); background: rgba(78,204,163,0.08); }
+
+  /* CONCEPT BOX */
+  .concept-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .concept-box-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; }
+  .concept-box-header h3 { font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; }
+  .concept-box-body { display: none; padding: 0 16px 16px; }
+  .concept-box-body.open { display: block; }
+  .concept-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 12px; }
+  .concept-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .concept-name { font-size: 12px; font-weight: 700; color: var(--accent2); margin-bottom: 4px; font-family: monospace; }
+  .concept-def { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .concept-example { font-size: 11px; color: var(--accent); margin-top: 4px; font-family: monospace; background: var(--bg); padding: 4px 8px; border-radius: 4px; }
+
+  /* FEEDBACK */
+  .feedback { display: none; padding: 14px 16px; border-radius: 12px; font-size: 13px; line-height: 1.6; }
+  .feedback.show { display: block; }
+  .feedback.success { background: rgba(78,204,163,0.1); border: 1px solid var(--success); color: var(--success); }
+  .feedback.partial { background: rgba(255,200,100,0.1); border: 1px solid var(--warn); color: var(--warn); }
+  .feedback.error { background: rgba(255,107,107,0.1); border: 1px solid var(--fail); color: var(--fail); }
+  .explanation { margin-top: 10px; color: var(--text); font-size: 13px; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .check-btn { padding: 12px 24px; background: linear-gradient(135deg, var(--accent), #8b97ff); border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .check-btn:active { transform: scale(0.97); }
+  .reset-btn2 { padding: 12px 20px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text2); font-size: 13px; cursor: pointer; }
+  .reset-btn2:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* MOBILE TAP MODE */
+  .tap-mode .answer-chip { cursor: pointer; touch-action: manipulation; }
+  .tap-mode .answer-chip.selected { border-color: var(--accent); color: var(--accent); background: rgba(108,123,255,0.1); }
+  .tap-mode .blank { cursor: pointer; }
+
+  @media (max-width: 768px) {
+    main { padding: 14px; gap: 14px; }
+    .ch-title { font-size: 17px; }
+    .code-body { font-size: 12px; padding: 12px; }
+    .concept-grid { grid-template-columns: 1fr; }
+    .tab-btn { padding: 10px 14px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">💻 Code Challenges</div>
+  <a href="index.html" class="nav-back">← Quiz</a>
+</nav>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="loadChallenge(0)">
+    Two Sum <span class="diff diff-easy">Easy</span>
+  </button>
+  <button class="tab-btn" onclick="loadChallenge(1)">
+    Valid Parentheses <span class="diff diff-easy">Easy</span>
+  </button>
+  <button class="tab-btn" onclick="loadChallenge(2)">
+    Longest Substring <span class="diff diff-medium">Medium</span>
+  </button>
+  <button class="tab-btn" onclick="loadChallenge(3)">
+    Binary Search <span class="diff diff-medium">Medium</span>
+  </button>
+  <button class="tab-btn" onclick="loadChallenge(4)">
+    Merge Intervals <span class="diff diff-hard">Hard</span>
+  </button>
+</div>
+
+<main id="main"></main>
+
+<script>
+const isMobile = () => window.innerWidth <= 768;
+let selectedChip = null;
+let conceptOpen = false;
+let currentChallenge = 0;
+
+const challenges = [
+  // ── EASY 1: TWO SUM ──
+  {
+    title: 'Two Sum',
+    difficulty: 'Easy',
+    diffClass: 'diff-easy',
+    desc: 'Given an array of integers and a target number, return the indices of the two numbers that add up to the target. Each input has exactly one solution. You may not use the same element twice.',
+    example: 'Input: nums = [2, 7, 11, 15], target = 9 → Output: [0, 1] because nums[0] + nums[1] = 2 + 7 = 9',
+    concepts: ['Arrays', 'Hash Maps', 'O(n) time complexity', 'Dictionary lookup'],
+    answers: ['dict', 'enumerate', 'complement', 'return', 'int', 'for', 'if', 'nums'],
+    blanks: {
+      b1: 'dict',
+      b2: 'enumerate',
+      b3: 'complement',
+      b4: 'if',
+      b5: 'return',
+    },
+    code: [
+      { ln: 1,  html: `<span class="kw">def</span> <span class="fn">two_sum</span>(nums: <span class="fn">list</span>[<span class="blank" id="b1" data-answer="dict" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b1')" onclick="tapBlank('b1')"></span>], target: <span class="kw">int</span>) -> <span class="fn">list</span>[<span class="kw">int</span>]:` },
+      { ln: 2,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># Hash map stores value → index for O(1) lookup</span>` },
+      { ln: 3,  html: `&nbsp;&nbsp;&nbsp;&nbsp;seen = {}` },
+      { ln: 4,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">for</span> i, num <span class="kw">in</span> <span class="blank" id="b2" data-answer="enumerate" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b2')" onclick="tapBlank('b2')"></span>(nums):` },
+      { ln: 5,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b3" data-answer="complement" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b3')" onclick="tapBlank('b3')"></span> = target - num` },
+      { ln: 6,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b4" data-answer="if" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b4')" onclick="tapBlank('b4')"></span> complement <span class="kw">in</span> seen:` },
+      { ln: 7,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b5" data-answer="return" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b5')" onclick="tapBlank('b5')"></span> [seen[complement], i]` },
+      { ln: 8,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seen[num] = i` },
+    ],
+    conceptCards: [
+      { name: 'list[int]', def: 'A type hint saying this is a list of integers. Python uses these for clarity but doesnt enforce them at runtime.', example: 'nums: list[int] = [1, 2, 3]' },
+      { name: 'dict {}', def: 'A hash map / dictionary. Stores key-value pairs. O(1) average lookup — this is why we use it instead of a nested loop.', example: 'seen = {}  →  seen[7] = 0' },
+      { name: 'enumerate()', def: 'Returns both the index AND value of each item in a loop — avoids manually tracking i.', example: 'for i, val in enumerate([10,20]): → (0,10), (1,20)' },
+      { name: 'complement', def: 'The number we need to find. If target=9 and current num=2, complement=7. We check if 7 is already in our map.', example: 'complement = target - num → 9 - 2 = 7' },
+      { name: 'O(n) vs O(n²)', def: 'Brute force nested loops = O(n²). Hash map approach = O(n) — one pass through the array. Much faster at scale.', example: 'n=1000: O(n)=1000 ops, O(n²)=1,000,000 ops' },
+    ],
+    explanation: `<strong>Why this works:</strong> Instead of checking every pair (slow O(n²)), we use a hash map to remember numbers we've seen. For each number, we calculate what number we NEED (complement = target - num). If that number is already in our map, we found the pair! If not, we store the current number for future lookups. One pass through the array = O(n) time.`
+  },
+
+  // ── EASY 2: VALID PARENTHESES ──
+  {
+    title: 'Valid Parentheses',
+    difficulty: 'Easy',
+    diffClass: 'diff-easy',
+    desc: 'Given a string containing only ( ) { } [ ], determine if the input string is valid. Open brackets must be closed by the same type and in the correct order.',
+    example: `Input: "({[]})" → Output: True\nInput: "([)]" → Output: False`,
+    concepts: ['Stack', 'Hash Map', 'String iteration', 'LIFO'],
+    answers: ['stack', 'append', 'pop', 'return', 'not', 'str', 'bool', 'mapping'],
+    blanks: {
+      b1: 'stack',
+      b2: 'mapping',
+      b3: 'append',
+      b4: 'not',
+      b5: 'pop',
+      b6: 'return',
+    },
+    code: [
+      { ln: 1,  html: `<span class="kw">def</span> <span class="fn">is_valid</span>(s: <span class="blank" id="b1" data-answer="stack" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b1')" onclick="tapBlank('b1')"></span>) -> <span class="kw">bool</span>:` },
+      { ln: 2,  html: `&nbsp;&nbsp;&nbsp;&nbsp;stack = []` },
+      { ln: 3,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b2" data-answer="mapping" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b2')" onclick="tapBlank('b2')"></span> = {<span class="str">")": "("</span>, <span class="str">"}": "{"</span>, <span class="str">"]": "["</span>}` },
+      { ln: 4,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">for</span> char <span class="kw">in</span> s:` },
+      { ln: 5,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> char <span class="kw">in</span> mapping:` },
+      { ln: 6,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;top = stack.<span class="blank" id="b5" data-answer="pop" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b5')" onclick="tapBlank('b5')">()</span> <span class="kw">if</span> stack <span class="kw">else</span> <span class="str">"#"</span>` },
+      { ln: 7,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> mapping[char] != top:` },
+      { ln: 8,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b6" data-answer="return" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b6')" onclick="tapBlank('b6')"></span> <span class="kw">False</span>` },
+      { ln: 9,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">else</span>:` },
+      { ln: 10, html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stack.<span class="blank" id="b3" data-answer="append" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b3')" onclick="tapBlank('b3')">(char)</span>` },
+      { ln: 11, html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="blank" id="b4" data-answer="not" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b4')" onclick="tapBlank('b4')"></span> stack` },
+    ],
+    conceptCards: [
+      { name: 'Stack []', def: 'A LIFO (Last In First Out) data structure. Like a stack of plates — you add and remove from the top only.', example: 'stack = []  →  push: append()  →  pop: pop()' },
+      { name: '.append()', def: 'Adds an item to the END (top) of a list/stack. O(1) time.', example: 'stack.append("(")  →  stack = ["("]' },
+      { name: '.pop()', def: 'Removes and returns the LAST item from a list/stack. O(1) time. If stack is empty, raises an error — guard with "if stack else"', example: 'stack.pop()  →  removes last element' },
+      { name: 'mapping dict', def: 'Maps each closing bracket to its matching opening bracket. When we see ")", we look up its match "(" and compare to the top of the stack.', example: 'mapping = {")": "(", "]": "[", "}": "{"}' },
+      { name: 'not stack', def: 'If the stack is empty at the end all brackets were matched. "not []" = True. If the stack still has items = unmatched open brackets remain.', example: 'not []  →  True  |  not ["("]  →  False' },
+      { name: 'LIFO logic', def: 'The last opened bracket must be the first closed. A stack naturally enforces this — push opens, pop and verify closes.', example: '({[  →  push (, push {, push [  →  close ] matches top [' },
+    ],
+    explanation: `<strong>Why a stack works:</strong> Brackets must close in reverse order of how they opened — that's exactly what LIFO (Last In First Out) does. We push every opening bracket. When we see a closing bracket, we pop the stack and check if it matches. If it doesn't match, or the stack is empty when we try to pop, the string is invalid. At the end, if the stack is empty all brackets were matched.`
+  },
+
+  // ── MEDIUM 1: LONGEST SUBSTRING ──
+  {
+    title: 'Longest Substring Without Repeating Characters',
+    difficulty: 'Medium',
+    diffClass: 'diff-medium',
+    desc: 'Given a string, find the length of the longest substring without repeating characters. Use the sliding window technique.',
+    example: 'Input: "abcabcbb" → Output: 3 (substring "abc")\nInput: "pwwkew" → Output: 3 (substring "wke")',
+    concepts: ['Sliding Window', 'Set', 'Two pointers', 'O(n) time'],
+    answers: ['set()', 'max', 'add', 'discard', 'right', 'left', 'len', 'while'],
+    blanks: {
+      b1: 'set()',
+      b2: 'while',
+      b3: 'discard',
+      b4: 'add',
+      b5: 'max',
+    },
+    code: [
+      { ln: 1,  html: `<span class="kw">def</span> <span class="fn">length_of_longest_substring</span>(s: <span class="kw">str</span>) -> <span class="kw">int</span>:` },
+      { ln: 2,  html: `&nbsp;&nbsp;&nbsp;&nbsp;char_set = <span class="blank" id="b1" data-answer="set()" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b1')" onclick="tapBlank('b1')"></span>` },
+      { ln: 3,  html: `&nbsp;&nbsp;&nbsp;&nbsp;left = <span class="num">0</span>` },
+      { ln: 4,  html: `&nbsp;&nbsp;&nbsp;&nbsp;max_len = <span class="num">0</span>` },
+      { ln: 5,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">for</span> right <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(s)):` },
+      { ln: 6,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b2" data-answer="while" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b2')" onclick="tapBlank('b2')"></span> s[right] <span class="kw">in</span> char_set:` },
+      { ln: 7,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char_set.<span class="blank" id="b3" data-answer="discard" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b3')" onclick="tapBlank('b3')">(s[left])</span>` },
+      { ln: 8,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;left += <span class="num">1</span>` },
+      { ln: 9,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char_set.<span class="blank" id="b4" data-answer="add" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b4')" onclick="tapBlank('b4')">(s[right])</span>` },
+      { ln: 10, html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;max_len = <span class="blank" id="b5" data-answer="max" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b5')" onclick="tapBlank('b5')">(max_len, right - left + <span class="num">1</span>)</span>` },
+      { ln: 11, html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> max_len` },
+    ],
+    conceptCards: [
+      { name: 'set()', def: 'An unordered collection of UNIQUE values. Perfect for tracking which characters are in the current window — O(1) lookup.', example: 'char_set = set()  →  char_set.add("a")  →  {"a"}' },
+      { name: 'Sliding window', def: 'Two pointers (left, right) define a window. Right expands the window, left shrinks it when there is a violation. Avoids nested loops.', example: '"abca": window slides from [0,2] to [1,3] when "a" repeats' },
+      { name: '.add()', def: 'Adds an element to a set. If it already exists, nothing changes — sets only hold unique values.', example: 'char_set.add("b")  →  adds "b" to the set' },
+      { name: '.discard()', def: 'Removes an element from a set if it exists. Unlike .remove(), it doesnt raise an error if the element isnt there.', example: 'char_set.discard("a")  →  removes "a" safely' },
+      { name: 'max(a, b)', def: 'Returns the larger of two values. We use it to track the maximum window size seen so far without an if statement.', example: 'max(3, 5)  →  5  |  max_len = max(max_len, right-left+1)' },
+      { name: 'while vs if', def: 'We use while (not if) because we might need to shrink the window multiple times before the duplicate is removed from the window.', example: '"aab": left must move past first "a" before second "a" clears' },
+    ],
+    explanation: `<strong>Sliding window technique:</strong> We maintain a window of unique characters using two pointers. The right pointer expands the window by adding characters. When we hit a duplicate, the left pointer shrinks the window by removing characters until the duplicate is gone. At each step we record the window size. One pass through the string = O(n) time instead of O(n²) for brute force.`
+  },
+
+  // ── MEDIUM 2: BINARY SEARCH ──
+  {
+    title: 'Binary Search',
+    difficulty: 'Medium',
+    diffClass: 'diff-medium',
+    desc: 'Given a sorted array of integers and a target, return the index of target or -1 if not found. Must run in O(log n) time — you cannot use linear search.',
+    example: 'Input: nums = [-1, 0, 3, 5, 9, 12], target = 9 → Output: 4\nInput: nums = [-1, 0, 3, 5, 9, 12], target = 2 → Output: -1',
+    concepts: ['Binary search', 'O(log n)', 'Divide and conquer', 'Integer division'],
+    answers: ['left', 'right', 'mid', 'return', 'while', '-1', '//', 'len'],
+    blanks: {
+      b1: 'left',
+      b2: 'right',
+      b3: 'while',
+      b4: 'mid',
+      b5: 'return',
+      b6: '-1',
+    },
+    code: [
+      { ln: 1,  html: `<span class="kw">def</span> <span class="fn">binary_search</span>(nums: <span class="fn">list</span>[<span class="kw">int</span>], target: <span class="kw">int</span>) -> <span class="kw">int</span>:` },
+      { ln: 2,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b1" data-answer="left" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b1')" onclick="tapBlank('b1')"></span>, <span class="blank" id="b2" data-answer="right" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b2')" onclick="tapBlank('b2')"></span> = <span class="num">0</span>, <span class="fn">len</span>(nums) - <span class="num">1</span>` },
+      { ln: 3,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b3" data-answer="while" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b3')" onclick="tapBlank('b3')"></span> left <= right:` },
+      { ln: 4,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b4" data-answer="mid" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b4')" onclick="tapBlank('b4')"></span> = (left + right) <span class="cm">// 2  </span><span class="cm"># integer division</span>` },
+      { ln: 5,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> nums[mid] == target:` },
+      { ln: 6,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b5" data-answer="return" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b5')" onclick="tapBlank('b5')"></span> mid` },
+      { ln: 7,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">elif</span> nums[mid] < target:` },
+      { ln: 8,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;left = mid + <span class="num">1</span>` },
+      { ln: 9,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">else</span>:` },
+      { ln: 10, html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;right = mid - <span class="num">1</span>` },
+      { ln: 11, html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="blank" id="b6" data-answer="-1" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b6')" onclick="tapBlank('b6')"></span>` },
+    ],
+    conceptCards: [
+      { name: 'left, right pointers', def: 'Two variables tracking the current search boundary. Start at 0 and len-1. Narrow in until they cross.', example: 'left=0, right=5  →  search the whole array' },
+      { name: 'mid = (left+right) // 2', def: 'Integer division (//) discards the decimal. Gets the index of the middle element of the current search range.', example: '(0+5)//2 = 2  →  check index 2 first' },
+      { name: 'O(log n)', def: 'Each comparison eliminates HALF the remaining elements. For 1 million items, binary search takes only ~20 comparisons.', example: 'n=1024: log₂(1024)=10 comparisons max' },
+      { name: 'while left <= right', def: 'Keep searching while there is still a valid range. When left > right we have exhausted the search space — target not found.', example: 'left=3, right=3: still one element to check' },
+      { name: 'return -1', def: 'Convention for "not found" in search problems. The while loop exits when the target cannot exist in the remaining range.', example: 'nums=[1,3,5], target=4 → return -1' },
+      { name: '// integer division', def: 'Double slash // always returns a whole number (floors down). Regular / returns a float. Array indices must be integers.', example: '7//2 = 3  |  7/2 = 3.5  →  cant use 3.5 as an index' },
+    ],
+    explanation: `<strong>Why O(log n):</strong> Each step cuts the search space in half. With 1 million elements, linear search might check all 1 million. Binary search checks at most 20 (log₂ of 1 million ≈ 20). The key insight: the array is SORTED, so we can immediately eliminate half the elements by comparing the middle value to the target.`
+  },
+
+  // ── HARD: MERGE INTERVALS ──
+  {
+    title: 'Merge Intervals',
+    difficulty: 'Hard',
+    diffClass: 'diff-hard',
+    desc: 'Given an array of intervals [start, end], merge all overlapping intervals and return the result. Two intervals overlap if one starts before the other ends.',
+    example: 'Input: [[1,3],[2,6],[8,10],[15,18]] → Output: [[1,6],[8,10],[15,18]]\nInput: [[1,4],[4,5]] → Output: [[1,5]]  (touching counts as overlapping)',
+    concepts: ['Sorting', 'Greedy', 'Array manipulation', 'List comprehension'],
+    answers: ['sort', 'merged', 'append', 'max', 'key', 'lambda', 'start', 'end'],
+    blanks: {
+      b1: 'key',
+      b2: 'lambda',
+      b3: 'merged',
+      b4: 'append',
+      b5: 'max',
+      b6: 'start',
+    },
+    code: [
+      { ln: 1,  html: `<span class="kw">def</span> <span class="fn">merge</span>(intervals: <span class="fn">list</span>[<span class="fn">list</span>[<span class="kw">int</span>]]) -> <span class="fn">list</span>[<span class="fn">list</span>[<span class="kw">int</span>]]:` },
+      { ln: 2,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># Sort by start time so overlapping intervals are adjacent</span>` },
+      { ln: 3,  html: `&nbsp;&nbsp;&nbsp;&nbsp;intervals.sort(<span class="blank" id="b1" data-answer="key" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b1')" onclick="tapBlank('b1')"></span>=<span class="blank" id="b2" data-answer="lambda" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b2')" onclick="tapBlank('b2')"></span> x: x[<span class="num">0</span>])` },
+      { ln: 4,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="blank" id="b3" data-answer="merged" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b3')" onclick="tapBlank('b3')"></span> = [intervals[<span class="num">0</span>]]` },
+      { ln: 5,  html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">for</span> <span class="blank" id="b6" data-answer="start" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b6')" onclick="tapBlank('b6')"></span>, end <span class="kw">in</span> intervals[<span class="num">1</span>:]:` },
+      { ln: 6,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> start <= merged[<span class="num">-1</span>][<span class="num">1</span>]:  <span class="cm"># overlap!</span>` },
+      { ln: 7,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;merged[<span class="num">-1</span>][<span class="num">1</span>] = <span class="blank" id="b5" data-answer="max" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b5')" onclick="tapBlank('b5')">(merged[-<span class="num">1</span>][<span class="num">1</span>], end)</span>` },
+      { ln: 8,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">else</span>:` },
+      { ln: 9,  html: `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;merged.<span class="blank" id="b4" data-answer="append" ondragover="ov(event)" ondragleave="ol(event)" ondrop="od(event,'b4')" onclick="tapBlank('b4')">([ start, end ])</span>` },
+      { ln: 10, html: `&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> merged` },
+    ],
+    conceptCards: [
+      { name: 'list[list[int]]', def: 'A list of lists of integers. Each inner list is an interval [start, end]. Type hints make complex data structures readable.', example: '[[1,3],[2,6]]  →  two intervals' },
+      { name: '.sort(key=lambda)', def: 'Sorts in place. key= takes a function that extracts what to sort by. lambda x: x[0] means sort by the first element of each interval.', example: 'intervals.sort(key=lambda x: x[0])  →  sort by start time' },
+      { name: 'lambda', def: 'An anonymous one-line function. lambda x: x[0] is a tiny function that returns the first element of x. Useful for sort keys.', example: 'lambda x: x[0]  →  same as  def f(x): return x[0]' },
+      { name: 'merged[-1]', def: 'Negative indexing accesses from the end. [-1] is the LAST element. merged[-1][1] is the end of the last merged interval.', example: '[1,2,3][-1] = 3  |  merged[-1] = last interval added' },
+      { name: 'Greedy approach', def: 'Make the locally optimal choice at each step. After sorting, we greedily extend the current interval as far as possible before starting a new one.', example: '[1,3] + [2,6] overlaps → extend to [1,6] greedily' },
+      { name: 'max() for merging', def: 'When two intervals overlap, the merged end is the MAX of both ends. Handles cases where one interval is completely inside another.', example: '[1,10] + [2,5]: end = max(10,5) = 10  →  [1,10]' },
+      { name: 'intervals[1:]', def: 'Slice starting at index 1 — skips the first interval since we already added it to merged as our starting point.', example: '[a,b,c,d][1:]  →  [b,c,d]' },
+    ],
+    explanation: `<strong>The key insight:</strong> After SORTING by start time, overlapping intervals are guaranteed to be adjacent. We only need one pass through the sorted array. For each interval, check if it overlaps with the last one in our result. Overlap condition: current start ≤ last end. If overlap, extend the end (take the max). If no overlap, add as a new interval. Sorting = O(n log n), single pass = O(n), total = O(n log n).`
+  },
+];
+
+// ── DRAG / DROP ──
+let draggedChip = null;
+
+function ov(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function ol(e) { e.currentTarget.classList.remove('drag-over'); }
+function od(e, blankId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!draggedChip) return;
+  placeAnswer(blankId, draggedChip.dataset.answer, draggedChip);
+}
+
+function placeAnswer(blankId, answer, chipEl) {
+  const blank = document.getElementById(blankId);
+  if (!blank) return;
+  // return previous chip if blank was filled
+  const prev = blank.dataset.filledWith;
+  if (prev) {
+    const prevChip = document.querySelector(`.answer-chip[data-answer="${prev}"]`);
+    if (prevChip) prevChip.classList.remove('used');
+  }
+  blank.classList.add('filled');
+  blank.classList.remove('correct','incorrect');
+  blank.textContent = answer;
+  blank.dataset.filledWith = answer;
+  if (chipEl) chipEl.classList.add('used');
+}
+
+// ── TAP MODE ──
+function tapChip(el) {
+  if (el.classList.contains('used')) return;
+  document.querySelectorAll('.answer-chip.selected').forEach(c => c.classList.remove('selected'));
+  if (selectedChip === el) { selectedChip = null; return; }
+  el.classList.add('selected');
+  selectedChip = el;
+}
+
+function tapBlank(blankId) {
+  if (!selectedChip) return;
+  placeAnswer(blankId, selectedChip.dataset.answer, selectedChip);
+  selectedChip.classList.remove('selected');
+  selectedChip = null;
+}
+
+function tapFilledBlank(blankId) {
+  const blank = document.getElementById(blankId);
+  if (!blank || blank.classList.contains('correct')) return;
+  const prev = blank.dataset.filledWith;
+  if (prev) {
+    const prevChip = document.querySelector(`.answer-chip[data-answer="${prev}"]`);
+    if (prevChip) prevChip.classList.remove('used');
+  }
+  blank.classList.remove('filled','incorrect');
+  blank.textContent = '';
+  blank.dataset.filledWith = '';
+}
+
+// ── CHECK ANSWERS ──
+function checkAnswers() {
+  const ch = challenges[currentChallenge];
+  let correct = 0;
+  const total = Object.keys(ch.blanks).length;
+
+  Object.entries(ch.blanks).forEach(([id, answer]) => {
+    const blank = document.getElementById(id);
+    if (!blank) return;
+    const filled = blank.dataset.filledWith;
+    if (filled === answer) {
+      blank.classList.add('correct');
+      blank.classList.remove('incorrect');
+      const chip = document.querySelector(`.answer-chip[data-answer="${answer}"]`);
+      if (chip) chip.classList.add('correct-chip');
+      correct++;
+    } else if (filled) {
+      blank.classList.add('incorrect');
+      blank.classList.remove('correct');
+      setTimeout(() => blank.classList.remove('incorrect'), 500);
+    }
+  });
+
+  const feedback = document.getElementById('feedback');
+  const pct = Math.round((correct/total)*100);
+
+  if (correct === total) {
+    feedback.className = 'feedback show success';
+    feedback.innerHTML = `<strong>🎉 Perfect!</strong> All ${total} blanks correct!<div class="explanation">${ch.explanation}</div>`;
+    openConceptBox();
+  } else if (pct >= 60) {
+    feedback.className = 'feedback show partial';
+    feedback.innerHTML = `<strong>Almost!</strong> ${correct}/${total} correct. Wrong blanks are highlighted — check the concept cards below.`;
+    openConceptBox();
+  } else {
+    feedback.className = 'feedback show error';
+    feedback.innerHTML = `<strong>Keep going!</strong> ${correct}/${total} correct. Read the concept cards below and try again.`;
+    openConceptBox();
+  }
+}
+
+function resetChallenge() {
+  loadChallenge(currentChallenge);
+}
+
+// ── CONCEPT BOX ──
+function openConceptBox() {
+  conceptOpen = true;
+  const body = document.getElementById('conceptBody');
+  if (body) { body.classList.add('open'); updateConceptHeader(); }
+}
+
+function toggleConceptBox() {
+  conceptOpen = !conceptOpen;
+  const body = document.getElementById('conceptBody');
+  if (body) { body.classList.toggle('open', conceptOpen); updateConceptHeader(); }
+}
+
+function updateConceptHeader() {
+  const hdr = document.querySelector('.concept-box-header h3');
+  const toggle = document.querySelector('.concept-box-header span');
+  if (hdr) hdr.textContent = `📖 Concept cards — tap to ${conceptOpen ? 'hide' : 'show'}`;
+  if (toggle) toggle.textContent = conceptOpen ? '▲' : '▼';
+}
+
+// ── LOAD CHALLENGE ──
+function loadChallenge(idx) {
+  currentChallenge = idx;
+  conceptOpen = false;
+  selectedChip = null;
+  draggedChip = null;
+
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+
+  const ch = challenges[idx];
+  const mobile = isMobile();
+
+  document.getElementById('main').innerHTML = `
+    <!-- HEADER -->
+    <div class="challenge-header">
+      <div class="ch-top">
+        <div class="quiz-title ch-title">${ch.title}</div>
+        <span class="ch-badge ${ch.diffClass}">${ch.difficulty}</span>
+      </div>
+      <div class="ch-desc">${ch.desc.replace(/\n/g,'<br>')}</div>
+      <div class="ch-desc" style="margin-top:8px;font-family:monospace;font-size:12px;color:var(--accent2)">${ch.example.replace(/\n/g,'<br>')}</div>
+      <div class="ch-concepts" style="margin-top:12px">
+        ${ch.concepts.map(c => `<span class="concept-tag">${c}</span>`).join('')}
+      </div>
+    </div>
+
+    <!-- CODE -->
+    <div class="code-section">
+      <div class="code-header">
+        <span>python3</span>
+        <span>fill in the blanks</span>
+      </div>
+      <div class="code-body">
+        ${ch.code.map(line => `
+          <div class="line">
+            <span class="ln">${line.ln}</span>
+            <span>${line.html}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- ANSWER BANK -->
+    <div class="answer-section">
+      <h3>${mobile ? '👆 Tap a chip, then tap a blank' : '🖱 Drag chips into the blanks'}</h3>
+      <div class="answer-bank ${mobile ? 'tap-mode' : ''}">
+        ${ch.answers.map(a => `
+          <div class="answer-chip" data-answer="${a}"
+            draggable="true"
+            ondragstart="draggedChip=this;this.classList.add('dragging')"
+            ondragend="this.classList.remove('dragging')"
+            onclick="tapChip(this)">
+            ${a}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- CONCEPT CARDS -->
+    <div class="concept-box">
+      <div class="concept-box-header" onclick="toggleConceptBox()">
+        <h3>📖 Concept cards — tap to show</h3>
+        <span>▼</span>
+      </div>
+      <div class="concept-box-body" id="conceptBody">
+        <div class="concept-grid">
+          ${ch.conceptCards.map(c => `
+            <div class="concept-card">
+              <div class="concept-name">${c.name}</div>
+              <div class="concept-def">${c.def}</div>
+              <div class="concept-example">${c.example}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="feedback" id="feedback"></div>
+
+    <!-- BUTTONS -->
+    <div class="btn-row">
+      <button class="check-btn" onclick="checkAnswers()">Check answers</button>
+      <button class="reset-btn2" onclick="resetChallenge()">↺ Reset</button>
+    </div>
+  `;
+
+  // wire up filled blanks to tap-to-clear
+  document.querySelectorAll('.blank').forEach(b => {
+    b.addEventListener('click', function() {
+      if (this.classList.contains('filled') && !this.classList.contains('correct')) {
+        const id = this.id;
+        tapFilledBlank(id);
+      }
+    });
+  });
+}
+
+// init
+loadChallenge(0);
+window.addEventListener('resize', () => loadChallenge(currentChallenge));
+</script>
+</body>
+</html>
