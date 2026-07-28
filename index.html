@@ -38,6 +38,8 @@
   .progress-bar { width: 80px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s; }
   .menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+  .nav-code-link { font-size: 12px; color: var(--accent2); text-decoration: none; padding: 6px 12px; border: 1px solid var(--accent2); border-radius: 8px; white-space: nowrap; transition: all 0.15s; flex-shrink: 0; }
+  .nav-code-link:hover { background: rgba(78,204,163,0.1); }
 
   /* ── LAYOUT ── */
   .app { display: flex; flex: 1; overflow: hidden; }
@@ -221,6 +223,7 @@
 <nav>
   <button class="menu-btn" onclick="toggleDrawer()" aria-label="Menu">☰</button>
   <div class="nav-logo">⚡ SysDesign</div>
+  <a href="code-challenges.html" class="nav-code-link">💻 Code</a>
   <span class="nav-prog-text" id="progressText">0/33</span>
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
 </nav>
